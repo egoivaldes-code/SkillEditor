@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CRIPTA — Migrar habilidades V0.21.2 (ligero)</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>body{margin:0;background:#15120f;color:#eee4d2;font-family:Georgia,serif}main{max-width:760px;margin:auto;padding:22px}section{background:#241e17;border:1px solid #6c5840;border-radius:8px;padding:18px}button{font:inherit;padding:12px 16px;background:#5a4328;color:#fff;border:1px solid #a27a48;border-radius:5px}button:disabled{opacity:.5}progress{width:100%;height:20px}pre{white-space:pre-wrap;background:#17130f;padding:12px;border-radius:5px;max-height:300px;overflow:auto}a{color:#deb978}</style></head><body><main><section>
+<h1>Migración ligera de habilidades de CRIPTA V0.21.2</h1>
+<p>Importará 10 habilidades y sus 10 iconos al mismo Supabase del editor. Al estar en el mismo dominio de GitHub Pages, usará tu identidad actual del editor.</p>
+<button id="go">Importar habilidades e imágenes</button>
+<p><progress id="bar" max="10" value="0"></progress></p>
+<pre id="log">Preparado. Esta versión ligera descarga los iconos directamente desde el repositorio de CRIPTA.</pre>
+<p><a href="./">Volver al editor</a></p>
+</section></main>
+<script>
+const DATA={
+  "app": "CRIPTA Skill Creator Online Migration",
+  "version": 1,
+  "source": "CriptaV0.21.2",
+  "exportedAt": "2026-07-23T00:00:00.000Z",
+  "promptGuide": "GUÍA DE CREACIÓN DEL ICONO\n\n1. El icono debe ser cuadrado y estar completamente aislado sobre fondo magenta chroma puro #FF00FF.\n\n2. El soporte es un pergamino cuadrado envejecido, limpio y sencillo:\n- Sin marco.\n- Sin ribetes.\n- Sin remaches.\n- Sin adornos exteriores.\n- Con textura suave y poco ruido.\n- Ocupando casi toda la imagen.\n\n3. La ilustración:\n- Medieval y dibujada a mano.\n- Tinta y pintura apagada.\n- Inspirada en los iconos clásicos de Ultima Online.\n- Coherente con las escenas narrativas de CRIPTA.\n- Un único elemento protagonista.\n- Silueta clara y alto contraste.\n- Legible a 48x48 y 64x64 píxeles.\n- Sin texto, letras, números ni logotipos.\n- Sin estilo anime, cartoon, 3D moderno o colores neón.\n\n4. Código visual:\n- Pasiva neutra: escala de grises.\n- Pasiva con escuela: gris con pequeños acentos del color de la escuela.\n- Activa: el color de la escuela puede ser predominante, pero apagado y medieval.\n\n5. La composición debe mostrar visualmente qué hace la habilidad sin convertir el icono en una escena compleja.",
+  "skills": [
+    {
+      "id": "butcher_precision",
+      "name": "Precisión carnicera",
+      "className": "Guerrero",
+      "type": "Pasiva",
+      "school": "Físico",
+      "duration": "Permanente",
+      "cost": "No definido en el juego",
+      "cooldown": "No aplica",
+      "tier1": "+10% de probabilidad crítica.",
+      "tier2": "+20% de probabilidad crítica.",
+      "tier3": "+30% de probabilidad crítica.",
+      "price1": 500,
+      "price2": 750,
+      "price3": 1000,
+      "description": "Aumenta la probabilidad de golpe crítico.",
+      "iconDesign": "Una espada atraviesa el centro de una diana, con una pequeña salpicadura de sangre seca en el impacto.",
+      "assetKey": "warrior_butcherprecision",
+      "tags": [
+        "pasiva",
+        "físico",
+        "butcher precision"
+      ],
+      "notes": "Datos del motor original de CriptaV0.21.2:\n{\n  \"id\": \"butcher_precision\",\n  \"class\": \"warrior\",\n  \"kind\": \"passive\",\n  \"damageType\": \"physical\",\n  \"durationLabel\": \"skillshop.duration.permanent\",\n  \"tiers\": [\n    {\n      \"price\": 500,\n      \"power\": {\n        \"critBonus\": 0.1\n      }\n    },\n    {\n      \"price\": 750,\n      \"power\": {\n        \"critBonus\": 0.2\n      }\n    },\n    {\n      \"price\": 1000,\n      \"power\": {\n        \"critBonus\": 0.3\n      }\n    }\n  ]\n}",
+      "promptText": "CRIPTA — ICONO DE HABILIDAD\n\nNombre: Precisión carnicera\nClase: Guerrero\nTipo: Pasiva\nEscuela o tipo de daño: Físico\nEfecto: Aumenta la probabilidad de golpe crítico.\n\nConcepto visual:\nUna espada atraviesa el centro de una diana, con una pequeña salpicadura de sangre seca en el impacto.\n\nGenera un icono cuadrado de habilidad para CRIPTA, completamente aislado sobre fondo magenta chroma puro #FF00FF. El icono debe consistir en un pergamino cuadrado envejecido, limpio y sencillo, sin marco, sin ribetes, sin remaches y sin adornos exteriores. El pergamino debe ocupar casi toda la imagen y tener una textura suave, con poco ruido y pocas manchas para conservar la definición.\n\nLa ilustración debe ser medieval, dibujada a mano con tinta y pintura apagada, inspirada en los iconos clásicos de Ultima Online y coherente con las escenas narrativas de CRIPTA. Debe mostrar un único elemento protagonista o una composición muy simple, con silueta clara, alto contraste y lectura inmediata incluso a 48x48 o 64x64 píxeles.\n\nLa habilidad es pasiva: utiliza una base en escala de grises con pequeños acentos de rojo oscuro, sangre seca y acero envejecido. El color nunca debe dominar.\n\nSin texto, letras, números, logotipos, marcos de interfaz, efectos modernos, colores neón, estilo anime, estilo cartoon ni apariencia 3D. Máxima resolución disponible.\n\nCriterios adicionales de esta colección:\nGUÍA DE CREACIÓN DEL ICONO\n\n1. El icono debe ser cuadrado y estar completamente aislado sobre fondo magenta chroma puro #FF00FF.\n\n2. El soporte es un pergamino cuadrado envejecido, limpio y sencillo:\n- Sin marco.\n- Sin ribetes.\n- Sin remaches.\n- Sin adornos exteriores.\n- Con textura suave y poco ruido.\n- Ocupando casi toda la imagen.\n\n3. La ilustración:\n- Medieval y dibujada a mano.\n- Tinta y pintura apagada.\n- Inspirada en los iconos clásicos de Ultima Online.\n- Coherente con las escenas narrativas de CRIPTA.\n- Un único elemento protagonista.\n- Silueta clara y alto contraste.\n- Legible a 48x48 y 64x64 píxeles.\n- Sin texto, letras, números ni logotipos.\n- Sin estilo anime, cartoon, 3D moderno o colores neón.\n\n4. Código visual:\n- Pasiva neutra: escala de grises.\n- Pasiva con escuela: gris con pequeños acentos del color de la escuela.\n- Activa: el color de la escuela puede ser predominante, pero apagado y medieval.\n\n5. La composición debe mostrar visualmente qué hace la habilidad sin convertir el icono en una escena compleja.",
+      "imageType": "image/png",
+      "imageFilename": "warrior_butcherprecision.png",
+      "hasImage": true,
+      "imageSource": "https://raw.githubusercontent.com/egoivaldes-code/cripta/main/assets/ui/skills/warrior_butcherprecision.png"
+    },
+    {
+      "id": "faith_strikes",
+      "name": "Golpes de fe",
+      "className": "Paladín",
+      "type": "Pasiva",
+      "school": "Curación",
+      "duration": "Instantánea",
+      "cost": "No definido en el juego",
+      "cooldown": "No aplica",
+      "tier1": "15% de probabilidad de sanarte el 25% del daño infligido cuerpo a cuerpo.",
+      "tier2": "30% de probabilidad de sanarte el 25% del daño infligido cuerpo a cuerpo.",
+      "tier3": "45% de probabilidad de sanarte el 25% del daño infligido cuerpo a cuerpo.",
+      "price1": 500,
+      "price2": 750,
+      "price3": 1000,
+      "description": "El daño físico cuerpo a cuerpo tiene una probabilidad de curarte parte de lo infligido.",
+      "iconDesign": "Un puño armado o martillo golpea mientras una pequeña luz sagrada asciende hacia un corazón curado.",
+      "assetKey": "paladin_faithstrikes",
+      "tags": [
+        "pasiva",
+        "curación",
+        "faith strikes"
+      ],
+      "notes": "Datos del motor original de CriptaV0.21.2:\n{\n  \"id\": \"faith_strikes\",\n  \"class\": \"paladin\",\n  \"kind\": \"passive\",\n  \"damageType\": \"heal\",\n  \"durationLabel\": \"skillshop.duration.instant\",\n  \"tiers\": [\n    {\n      \"price\": 500,\n      \"power\": {\n        \"healChance\": 0.15,\n        \"healPct\": 0.25\n      }\n    },\n    {\n      \"price\": 750,\n      \"power\": {\n        \"healChance\": 0.3,\n        \"healPct\": 0.25\n      }\n    },\n    {\n      \"price\": 1000,\n      \"power\": {\n        \"healChance\": 0.45,\n        \"healPct\": 0.25\n      }\n    }\n  ]\n}",
+      "promptText": "CRIPTA — ICONO DE HABILIDAD\n\nNombre: Golpes de fe\nClase: Paladín\nTipo: Pasiva\nEscuela o tipo de daño: Curación\nEfecto: El daño físico cuerpo a cuerpo tiene una probabilidad de curarte parte de lo infligido.\n\nConcepto visual:\nUn puño armado o martillo golpea mientras una pequeña luz sagrada asciende hacia un corazón curado.\n\nGenera un icono cuadrado de habilidad para CRIPTA, completamente aislado sobre fondo magenta chroma puro #FF00FF. El icono debe consistir en un pergamino cuadrado envejecido, limpio y sencillo, sin marco, sin ribetes, sin remaches y sin adornos exteriores. El pergamino debe ocupar casi toda la imagen y tener una textura suave, con poco ruido y pocas manchas para conservar la definición.\n\nLa ilustración debe ser medieval, dibujada a mano con tinta y pintura apagada, inspirada en los iconos clásicos de Ultima Online y coherente con las escenas narrativas de CRIPTA. Debe mostrar un único elemento protagonista o una composición muy simple, con silueta clara, alto contraste y lectura inmediata incluso a 48x48 o 64x64 píxeles.\n\nLa habilidad es pasiva: utiliza una base en escala de grises con pequeños acentos de verde suave, marfil y dorado tenue. El color nunca debe dominar.\n\nSin texto, letras, números, logotipos, marcos de interfaz, efectos modernos, colores neón, estilo anime, estilo cartoon ni apariencia 3D. Máxima resolución disponible.\n\nCriterios adicionales de esta colección:\nGUÍA DE CREACIÓN DEL ICONO\n\n1. El icono debe ser cuadrado y estar completamente aislado sobre fondo magenta chroma puro #FF00FF.\n\n2. El soporte es un pergamino cuadrado envejecido, limpio y sencillo:\n- Sin marco.\n- Sin ribetes.\n- Sin remaches.\n- Sin adornos exteriores.\n- Con textura suave y poco ruido.\n- Ocupando casi toda la imagen.\n\n3. La ilustración:\n- Medieval y dibujada a mano.\n- Tinta y pintura apagada.\n- Inspirada en los iconos clásicos de Ultima Online.\n- Coherente con las escenas narrativas de CRIPTA.\n- Un único elemento protagonista.\n- Silueta clara y alto contraste.\n- Legible a 48x48 y 64x64 píxeles.\n- Sin texto, letras, números ni logotipos.\n- Sin estilo anime, cartoon, 3D moderno o colores neón.\n\n4. Código visual:\n- Pasiva neutra: escala de grises.\n- Pasiva con escuela: gris con pequeños acentos del color de la escuela.\n- Activa: el color de la escuela puede ser predominante, pero apagado y medieval.\n\n5. La composición debe mostrar visualmente qué hace la habilidad sin convertir el icono en una escena compleja.",
+      "imageType": "image/png",
+      "imageFilename": "paladin_faithstrikes.png",
+      "hasImage": true,
+      "imageSource": "https://raw.githubusercontent.com/egoivaldes-code/cripta/main/assets/ui/skills/paladin_faithstrikes.png"
+    },
+    {
+      "id": "flame_slash",
+      "name": "Tajo llameante",
+      "className": "Sin clase",
+      "type": "Activa",
+      "school": "Fuego",
+      "duration": "3 turnos",
+      "cost": "No definido en el juego",
+      "cooldown": "1 combate",
+      "tier1": "Daño de fuego bajo, quemadura breve.",
+      "tier2": "Más daño de fuego y la quemadura dura más turnos.",
+      "tier3": "Daño de fuego alto, quemadura larga y algo de área alrededor del objetivo.",
+      "price1": 500,
+      "price2": 1000,
+      "price3": 1500,
+      "description": "Un golpe de arma envuelto en fuego que quema al enemigo unos turnos tras el impacto.",
+      "iconDesign": "Una espada describe un tajo diagonal envuelto en llamas de brasa.",
+      "assetKey": "flame_slash",
+      "tags": [
+        "activa",
+        "fuego",
+        "flame slash"
+      ],
+      "notes": "Datos del motor original de CriptaV0.21.2:\n{\n  \"id\": \"flame_slash\",\n  \"kind\": \"active\",\n  \"damageType\": \"fire\",\n  \"range\": 1,\n  \"area\": null,\n  \"cooldown\": 1,\n  \"duration\": 3,\n  \"tiers\": [\n    {\n      \"price\": 500,\n      \"power\": {\n        \"dmgMult\": 1.2\n      }\n    },\n    {\n      \"price\": 1000,\n      \"power\": {\n        \"dmgMult\": 1.5\n      }\n    },\n    {\n      \"price\": 1500,\n      \"power\": {\n        \"dmgMult\": 1.8\n      }\n    }\n  ]\n}",
+      "promptText": "CRIPTA — ICONO DE HABILIDAD\n\nNombre: Tajo llameante\nClase: Sin clase\nTipo: Activa\nEscuela o tipo de daño: Fuego\nEfecto: Un golpe de arma envuelto en fuego que quema al enemigo unos turnos tras el impacto.\n\nConcepto visual:\nUna espada describe un tajo diagonal envuelto en llamas de brasa.\n\nGenera un icono cuadrado de habilidad para CRIPTA, completamente aislado sobre fondo magenta chroma puro #FF00FF. El icono debe consistir en un pergamino cuadrado envejecido, limpio y sencillo, sin marco, sin ribetes, sin remaches y sin adornos exteriores. El pergamino debe ocupar casi toda la imagen y tener una textura suave, con poco ruido y pocas manchas para conservar la definición.\n\nLa ilustración debe ser medieval, dibujada a mano con tinta y pintura apagada, inspirada en los iconos clásicos de Ultima Online y coherente con las escenas narrativas de CRIPTA. Debe mostrar un único elemento protagonista o una composición muy simple, con silueta clara, alto contraste y lectura inmediata incluso a 48x48 o 64x64 píxeles.\n\nLa habilidad es activa: utiliza como color predominante naranja quemado, ámbar y rojo de brasa, manteniendo una saturación baja y medieval.\n\nSin texto, letras, números, logotipos, marcos de interfaz, efectos modernos, colores neón, estilo anime, estilo cartoon ni apariencia 3D. Máxima resolución disponible.\n\nCriterios adicionales de esta colección:\nGUÍA DE CREACIÓN DEL ICONO\n\n1. El icono debe ser cuadrado y estar completamente aislado sobre fondo magenta chroma puro #FF00FF.\n\n2. El soporte es un pergamino cuadrado envejecido, limpio y sencillo:\n- Sin marco.\n- Sin ribetes.\n- Sin remaches.\n- Sin adornos exteriores.\n- Con textura suave y poco ruido.\n- Ocupando casi toda la imagen.\n\n3. La ilustración:\n- Medieval y dibujada a mano.\n- Tinta y pintura apagada.\n- Inspirada en los iconos clásicos de Ultima Online.\n- Coherente con las escenas narrativas de CRIPTA.\n- Un único elemento protagonista.\n- Silueta clara y alto contraste.\n- Legible a 48x48 y 64x64 píxeles.\n- Sin texto, letras, números ni logotipos.\n- Sin estilo anime, cartoon, 3D moderno o colores neón.\n\n4. Código visual:\n- Pasiva neutra: escala de grises.\n- Pasiva con escuela: gris con pequeños acentos del color de la escuela.\n- Activa: el color de la escuela puede ser predominante, pero apagado y medieval.\n\n5. La composición debe mostrar visualmente qué hace la habilidad sin convertir el icono en una escena compleja.",
+      "imageType": "image/png",
+      "imageFilename": "flame_slash.png",
+      "hasImage": true,
+      "imageSource": "https://raw.githubusercontent.com/egoivaldes-code/cripta/main/assets/ui/skills/flame_slash.png"
+    },
+    {
+      "id": "iron_skin",
+      "name": "Piel de hierro",
+      "className": "Sin clase",
+      "type": "Pasiva",
+      "school": "Sin escuela",
+      "duration": "Permanente",
+      "cost": "No definido en el juego",
+      "cooldown": "No aplica",
+      "tier1": "+ armadura leve.",
+      "tier2": "+ armadura moderada.",
+      "tier3": "+ armadura alta.",
+      "price1": 500,
+      "price2": 1000,
+      "price3": 1500,
+      "description": "Endurece la piel del héroe de forma permanente, reduciendo el daño físico recibido.",
+      "iconDesign": "Un torso o antebrazo humano convertido parcialmente en hierro endurecido.",
+      "assetKey": "iron_skin",
+      "tags": [
+        "pasiva",
+        "sin escuela",
+        "iron skin"
+      ],
+      "notes": "Datos del motor original de CriptaV0.21.2:\n{\n  \"id\": \"iron_skin\",\n  \"kind\": \"passive\",\n  \"damageType\": \"none\",\n  \"durationLabel\": \"skillshop.duration.permanent\",\n  \"tiers\": [\n    {\n      \"price\": 500,\n      \"power\": {\n        \"armorBonus\": 0.05\n      }\n    },\n    {\n      \"price\": 1000,\n      \"power\": {\n        \"armorBonus\": 0.1\n      }\n    },\n    {\n      \"price\": 1500,\n      \"power\": {\n        \"armorBonus\": 0.15\n      }\n    }\n  ]\n}",
+      "promptText": "CRIPTA — ICONO DE HABILIDAD\n\nNombre: Piel de hierro\nClase: Sin clase\nTipo: Pasiva\nEscuela o tipo de daño: Sin escuela\nEfecto: Endurece la piel del héroe de forma permanente, reduciendo el daño físico recibido.\n\nConcepto visual:\nUn torso o antebrazo humano convertido parcialmente en hierro endurecido.\n\nGenera un icono cuadrado de habilidad para CRIPTA, completamente aislado sobre fondo magenta chroma puro #FF00FF. El icono debe consistir en un pergamino cuadrado envejecido, limpio y sencillo, sin marco, sin ribetes, sin remaches y sin adornos exteriores. El pergamino debe ocupar casi toda la imagen y tener una textura suave, con poco ruido y pocas manchas para conservar la definición.\n\nLa ilustración debe ser medieval, dibujada a mano con tinta y pintura apagada, inspirada en los iconos clásicos de Ultima Online y coherente con las escenas narrativas de CRIPTA. Debe mostrar un único elemento protagonista o una composición muy simple, con silueta clara, alto contraste y lectura inmediata incluso a 48x48 o 64x64 píxeles.\n\nLa habilidad es pasiva neutra: utiliza escala de grises completa.\n\nSin texto, letras, números, logotipos, marcos de interfaz, efectos modernos, colores neón, estilo anime, estilo cartoon ni apariencia 3D. Máxima resolución disponible.\n\nCriterios adicionales de esta colección:\nGUÍA DE CREACIÓN DEL ICONO\n\n1. El icono debe ser cuadrado y estar completamente aislado sobre fondo magenta chroma puro #FF00FF.\n\n2. El soporte es un pergamino cuadrado envejecido, limpio y sencillo:\n- Sin marco.\n- Sin ribetes.\n- Sin remaches.\n- Sin adornos exteriores.\n- Con textura suave y poco ruido.\n- Ocupando casi toda la imagen.\n\n3. La ilustración:\n- Medieval y dibujada a mano.\n- Tinta y pintura apagada.\n- Inspirada en los iconos clásicos de Ultima Online.\n- Coherente con las escenas narrativas de CRIPTA.\n- Un único elemento protagonista.\n- Silueta clara y alto contraste.\n- Legible a 48x48 y 64x64 píxeles.\n- Sin texto, letras, números ni logotipos.\n- Sin estilo anime, cartoon, 3D moderno o colores neón.\n\n4. Código visual:\n- Pasiva neutra: escala de grises.\n- Pasiva con escuela: gris con pequeños acentos del color de la escuela.\n- Activa: el color de la escuela puede ser predominante, pero apagado y medieval.\n\n5. La composición debe mostrar visualmente qué hace la habilidad sin convertir el icono en una escena compleja.",
+      "imageType": "image/png",
+      "imageFilename": "iron_skin.png",
+      "hasImage": true,
+      "imageSource": "https://raw.githubusercontent.com/egoivaldes-code/cripta/main/assets/ui/skills/iron_skin.png"
+    },
+    {
+      "id": "frost_arrow",
+      "name": "Flecha de escarcha",
+      "className": "Sin clase",
+      "type": "Activa",
+      "school": "Hielo",
+      "duration": "1 turno",
+      "cost": "No definido en el juego",
+      "cooldown": "1 combate",
+      "tier1": "Daño de hielo bajo; ralentiza 1 turno.",
+      "tier2": "Más daño de hielo; ralentiza 2 turnos.",
+      "tier3": "Daño de hielo alto; ralentiza 2 turnos y puede llegar a congelar del todo.",
+      "price1": 500,
+      "price2": 800,
+      "price3": 1200,
+      "description": "Dispara una flecha helada a distancia que ralentiza al enemigo un instante.",
+      "iconDesign": "Una flecha cubierta de escarcha y pequeños cristales de hielo.",
+      "assetKey": "frost_arrow",
+      "tags": [
+        "activa",
+        "hielo",
+        "frost arrow"
+      ],
+      "notes": "Datos del motor original de CriptaV0.21.2:\n{\n  \"id\": \"frost_arrow\",\n  \"kind\": \"active\",\n  \"damageType\": \"ice\",\n  \"range\": 4,\n  \"area\": null,\n  \"cooldown\": 1,\n  \"duration\": 1,\n  \"tiers\": [\n    {\n      \"price\": 500,\n      \"power\": {\n        \"dmgMult\": 1.0\n      }\n    },\n    {\n      \"price\": 800,\n      \"power\": {\n        \"dmgMult\": 1.3\n      }\n    },\n    {\n      \"price\": 1200,\n      \"power\": {\n        \"dmgMult\": 1.6\n      }\n    }\n  ]\n}",
+      "promptText": "CRIPTA — ICONO DE HABILIDAD\n\nNombre: Flecha de escarcha\nClase: Sin clase\nTipo: Activa\nEscuela o tipo de daño: Hielo\nEfecto: Dispara una flecha helada a distancia que ralentiza al enemigo un instante.\n\nConcepto visual:\nUna flecha cubierta de escarcha y pequeños cristales de hielo.\n\nGenera un icono cuadrado de habilidad para CRIPTA, completamente aislado sobre fondo magenta chroma puro #FF00FF. El icono debe consistir en un pergamino cuadrado envejecido, limpio y sencillo, sin marco, sin ribetes, sin remaches y sin adornos exteriores. El pergamino debe ocupar casi toda la imagen y tener una textura suave, con poco ruido y pocas manchas para conservar la definición.\n\nLa ilustración debe ser medieval, dibujada a mano con tinta y pintura apagada, inspirada en los iconos clásicos de Ultima Online y coherente con las escenas narrativas de CRIPTA. Debe mostrar un único elemento protagonista o una composición muy simple, con silueta clara, alto contraste y lectura inmediata incluso a 48x48 o 64x64 píxeles.\n\nLa habilidad es activa: utiliza como color predominante azul frío, azul grisáceo y blanco azulado, manteniendo una saturación baja y medieval.\n\nSin texto, letras, números, logotipos, marcos de interfaz, efectos modernos, colores neón, estilo anime, estilo cartoon ni apariencia 3D. Máxima resolución disponible.\n\nCriterios adicionales de esta colección:\nGUÍA DE CREACIÓN DEL ICONO\n\n1. El icono debe ser cuadrado y estar completamente aislado sobre fondo magenta chroma puro #FF00FF.\n\n2. El soporte es un pergamino cuadrado envejecido, limpio y sencillo:\n- Sin marco.\n- Sin ribetes.\n- Sin remaches.\n- Sin adornos exteriores.\n- Con textura suave y poco ruido.\n- Ocupando casi toda la imagen.\n\n3. La ilustración:\n- Medieval y dibujada a mano.\n- Tinta y pintura apagada.\n- Inspirada en los iconos clásicos de Ultima Online.\n- Coherente con las escenas narrativas de CRIPTA.\n- Un único elemento protagonista.\n- Silueta clara y alto contraste.\n- Legible a 48x48 y 64x64 píxeles.\n- Sin texto, letras, números ni logotipos.\n- Sin estilo anime, cartoon, 3D moderno o colores neón.\n\n4. Código visual:\n- Pasiva neutra: escala de grises.\n- Pasiva con escuela: gris con pequeños acentos del color de la escuela.\n- Activa: el color de la escuela puede ser predominante, pero apagado y medieval.\n\n5. La composición debe mostrar visualmente qué hace la habilidad sin convertir el icono en una escena compleja.",
+      "imageType": "image/png",
+      "imageFilename": "frost_arrow.png",
+      "hasImage": true,
+      "imageSource": "https://raw.githubusercontent.com/egoivaldes-code/cripta/main/assets/ui/skills/frost_arrow.png"
+    },
+    {
+      "id": "poison_cloud",
+      "name": "Nube de veneno",
+      "className": "Sin clase",
+      "type": "Activa",
+      "school": "Veneno",
+      "duration": "3 turnos",
+      "cost": "No definido en el juego",
+      "cooldown": "3 combates",
+      "tier1": "Veneno leve en un área pequeña.",
+      "tier2": "Más veneno y algo más de área.",
+      "tier3": "Veneno intenso en un área grande, con más turnos de efecto.",
+      "price1": 600,
+      "price2": 1000,
+      "price3": 1400,
+      "description": "Lanza un frasco que estalla en una nube tóxica, envenenando todo lo que quede dentro del área.",
+      "iconDesign": "Un frasco roto libera una nube espesa de veneno verdoso.",
+      "assetKey": "poison_cloud",
+      "tags": [
+        "activa",
+        "veneno",
+        "poison cloud"
+      ],
+      "notes": "Datos del motor original de CriptaV0.21.2:\n{\n  \"id\": \"poison_cloud\",\n  \"kind\": \"active\",\n  \"damageType\": \"poison\",\n  \"range\": 3,\n  \"area\": 2,\n  \"cooldown\": 3,\n  \"duration\": 3,\n  \"tiers\": [\n    {\n      \"price\": 600,\n      \"power\": {\n        \"dmgMult\": 0.8\n      }\n    },\n    {\n      \"price\": 1000,\n      \"power\": {\n        \"dmgMult\": 1.0\n      }\n    },\n    {\n      \"price\": 1400,\n      \"power\": {\n        \"dmgMult\": 1.3\n      }\n    }\n  ]\n}",
+      "promptText": "CRIPTA — ICONO DE HABILIDAD\n\nNombre: Nube de veneno\nClase: Sin clase\nTipo: Activa\nEscuela o tipo de daño: Veneno\nEfecto: Lanza un frasco que estalla en una nube tóxica, envenenando todo lo que quede dentro del área.\n\nConcepto visual:\nUn frasco roto libera una nube espesa de veneno verdoso.\n\nGenera un icono cuadrado de habilidad para CRIPTA, completamente aislado sobre fondo magenta chroma puro #FF00FF. El icono debe consistir en un pergamino cuadrado envejecido, limpio y sencillo, sin marco, sin ribetes, sin remaches y sin adornos exteriores. El pergamino debe ocupar casi toda la imagen y tener una textura suave, con poco ruido y pocas manchas para conservar la definición.\n\nLa ilustración debe ser medieval, dibujada a mano con tinta y pintura apagada, inspirada en los iconos clásicos de Ultima Online y coherente con las escenas narrativas de CRIPTA. Debe mostrar un único elemento protagonista o una composición muy simple, con silueta clara, alto contraste y lectura inmediata incluso a 48x48 o 64x64 píxeles.\n\nLa habilidad es activa: utiliza como color predominante verde enfermizo y verde amarillento, manteniendo una saturación baja y medieval.\n\nSin texto, letras, números, logotipos, marcos de interfaz, efectos modernos, colores neón, estilo anime, estilo cartoon ni apariencia 3D. Máxima resolución disponible.\n\nCriterios adicionales de esta colección:\nGUÍA DE CREACIÓN DEL ICONO\n\n1. El icono debe ser cuadrado y estar completamente aislado sobre fondo magenta chroma puro #FF00FF.\n\n2. El soporte es un pergamino cuadrado envejecido, limpio y sencillo:\n- Sin marco.\n- Sin ribetes.\n- Sin remaches.\n- Sin adornos exteriores.\n- Con textura suave y poco ruido.\n- Ocupando casi toda la imagen.\n\n3. La ilustración:\n- Medieval y dibujada a mano.\n- Tinta y pintura apagada.\n- Inspirada en los iconos clásicos de Ultima Online.\n- Coherente con las escenas narrativas de CRIPTA.\n- Un único elemento protagonista.\n- Silueta clara y alto contraste.\n- Legible a 48x48 y 64x64 píxeles.\n- Sin texto, letras, números ni logotipos.\n- Sin estilo anime, cartoon, 3D moderno o colores neón.\n\n4. Código visual:\n- Pasiva neutra: escala de grises.\n- Pasiva con escuela: gris con pequeños acentos del color de la escuela.\n- Activa: el color de la escuela puede ser predominante, pero apagado y medieval.\n\n5. La composición debe mostrar visualmente qué hace la habilidad sin convertir el icono en una escena compleja.",
+      "imageType": "image/png",
+      "imageFilename": "poison_cloud.png",
+      "hasImage": true,
+      "imageSource": "https://raw.githubusercontent.com/egoivaldes-code/cripta/main/assets/ui/skills/poison_cloud.png"
+    },
+    {
+      "id": "holy_smite",
+      "name": "Golpe sagrado",
+      "className": "Sin clase",
+      "type": "Activa",
+      "school": "Sagrado",
+      "duration": "Instantánea",
+      "cost": "No definido en el juego",
+      "cooldown": "2 combates",
+      "tier1": "Daño sagrado bajo.",
+      "tier2": "Daño sagrado moderado.",
+      "tier3": "Daño sagrado alto, con posibilidad de aturdir un instante.",
+      "price1": 500,
+      "price2": 900,
+      "price3": 1300,
+      "description": "Un golpe cuerpo a cuerpo cargado de luz sagrada, especialmente dañino contra los no-muertos.",
+      "iconDesign": "Un arma cuerpo a cuerpo cae envuelta en un destello de luz sagrada.",
+      "assetKey": "holy_smite",
+      "tags": [
+        "activa",
+        "sagrado",
+        "holy smite"
+      ],
+      "notes": "Datos del motor original de CriptaV0.21.2:\n{\n  \"id\": \"holy_smite\",\n  \"kind\": \"active\",\n  \"damageType\": \"holy\",\n  \"range\": 1,\n  \"area\": null,\n  \"cooldown\": 2,\n  \"duration\": null,\n  \"tiers\": [\n    {\n      \"price\": 500,\n      \"power\": {\n        \"dmgMult\": 1.3\n      }\n    },\n    {\n      \"price\": 900,\n      \"power\": {\n        \"dmgMult\": 1.6\n      }\n    },\n    {\n      \"price\": 1300,\n      \"power\": {\n        \"dmgMult\": 2.0\n      }\n    }\n  ]\n}",
+      "promptText": "CRIPTA — ICONO DE HABILIDAD\n\nNombre: Golpe sagrado\nClase: Sin clase\nTipo: Activa\nEscuela o tipo de daño: Sagrado\nEfecto: Un golpe cuerpo a cuerpo cargado de luz sagrada, especialmente dañino contra los no-muertos.\n\nConcepto visual:\nUn arma cuerpo a cuerpo cae envuelta en un destello de luz sagrada.\n\nGenera un icono cuadrado de habilidad para CRIPTA, completamente aislado sobre fondo magenta chroma puro #FF00FF. El icono debe consistir en un pergamino cuadrado envejecido, limpio y sencillo, sin marco, sin ribetes, sin remaches y sin adornos exteriores. El pergamino debe ocupar casi toda la imagen y tener una textura suave, con poco ruido y pocas manchas para conservar la definición.\n\nLa ilustración debe ser medieval, dibujada a mano con tinta y pintura apagada, inspirada en los iconos clásicos de Ultima Online y coherente con las escenas narrativas de CRIPTA. Debe mostrar un único elemento protagonista o una composición muy simple, con silueta clara, alto contraste y lectura inmediata incluso a 48x48 o 64x64 píxeles.\n\nLa habilidad es activa: utiliza como color predominante dorado envejecido, marfil y amarillo cálido, manteniendo una saturación baja y medieval.\n\nSin texto, letras, números, logotipos, marcos de interfaz, efectos modernos, colores neón, estilo anime, estilo cartoon ni apariencia 3D. Máxima resolución disponible.\n\nCriterios adicionales de esta colección:\nGUÍA DE CREACIÓN DEL ICONO\n\n1. El icono debe ser cuadrado y estar completamente aislado sobre fondo magenta chroma puro #FF00FF.\n\n2. El soporte es un pergamino cuadrado envejecido, limpio y sencillo:\n- Sin marco.\n- Sin ribetes.\n- Sin remaches.\n- Sin adornos exteriores.\n- Con textura suave y poco ruido.\n- Ocupando casi toda la imagen.\n\n3. La ilustración:\n- Medieval y dibujada a mano.\n- Tinta y pintura apagada.\n- Inspirada en los iconos clásicos de Ultima Online.\n- Coherente con las escenas narrativas de CRIPTA.\n- Un único elemento protagonista.\n- Silueta clara y alto contraste.\n- Legible a 48x48 y 64x64 píxeles.\n- Sin texto, letras, números ni logotipos.\n- Sin estilo anime, cartoon, 3D moderno o colores neón.\n\n4. Código visual:\n- Pasiva neutra: escala de grises.\n- Pasiva con escuela: gris con pequeños acentos del color de la escuela.\n- Activa: el color de la escuela puede ser predominante, pero apagado y medieval.\n\n5. La composición debe mostrar visualmente qué hace la habilidad sin convertir el icono en una escena compleja.",
+      "imageType": "image/png",
+      "imageFilename": "holy_smite.png",
+      "hasImage": true,
+      "imageSource": "https://raw.githubusercontent.com/egoivaldes-code/cripta/main/assets/ui/skills/holy_smite.png"
+    },
+    {
+      "id": "war_cry",
+      "name": "Grito de guerra",
+      "className": "Sin clase",
+      "type": "Activa",
+      "school": "Sin escuela",
+      "duration": "2 turnos",
+      "cost": "No definido en el juego",
+      "cooldown": "3 combates",
+      "tier1": "+ daño leve durante 2 turnos.",
+      "tier2": "+ daño moderado durante 2 turnos.",
+      "tier3": "+ daño alto durante 3 turnos.",
+      "price1": 500,
+      "price2": 850,
+      "price3": 1200,
+      "description": "Un rugido que infunde valor: aumenta el daño propio durante unos turnos.",
+      "iconDesign": "Un rostro de perfil lanza un grito representado por ondas de fuerza.",
+      "assetKey": "war_cry",
+      "tags": [
+        "activa",
+        "sin escuela",
+        "war cry"
+      ],
+      "notes": "Datos del motor original de CriptaV0.21.2:\n{\n  \"id\": \"war_cry\",\n  \"kind\": \"active\",\n  \"damageType\": \"none\",\n  \"range\": 0,\n  \"area\": 2,\n  \"cooldown\": 3,\n  \"duration\": 2,\n  \"tiers\": [\n    {\n      \"price\": 500,\n      \"power\": {\n        \"atkBuffPct\": 0.2,\n        \"turns\": 2\n      }\n    },\n    {\n      \"price\": 850,\n      \"power\": {\n        \"atkBuffPct\": 0.35,\n        \"turns\": 2\n      }\n    },\n    {\n      \"price\": 1200,\n      \"power\": {\n        \"atkBuffPct\": 0.5,\n        \"turns\": 3\n      }\n    }\n  ]\n}",
+      "promptText": "CRIPTA — ICONO DE HABILIDAD\n\nNombre: Grito de guerra\nClase: Sin clase\nTipo: Activa\nEscuela o tipo de daño: Sin escuela\nEfecto: Un rugido que infunde valor: aumenta el daño propio durante unos turnos.\n\nConcepto visual:\nUn rostro de perfil lanza un grito representado por ondas de fuerza.\n\nGenera un icono cuadrado de habilidad para CRIPTA, completamente aislado sobre fondo magenta chroma puro #FF00FF. El icono debe consistir en un pergamino cuadrado envejecido, limpio y sencillo, sin marco, sin ribetes, sin remaches y sin adornos exteriores. El pergamino debe ocupar casi toda la imagen y tener una textura suave, con poco ruido y pocas manchas para conservar la definición.\n\nLa ilustración debe ser medieval, dibujada a mano con tinta y pintura apagada, inspirada en los iconos clásicos de Ultima Online y coherente con las escenas narrativas de CRIPTA. Debe mostrar un único elemento protagonista o una composición muy simple, con silueta clara, alto contraste y lectura inmediata incluso a 48x48 o 64x64 píxeles.\n\nLa habilidad es activa: utiliza como color predominante escala de grises, manteniendo una saturación baja y medieval.\n\nSin texto, letras, números, logotipos, marcos de interfaz, efectos modernos, colores neón, estilo anime, estilo cartoon ni apariencia 3D. Máxima resolución disponible.\n\nCriterios adicionales de esta colección:\nGUÍA DE CREACIÓN DEL ICONO\n\n1. El icono debe ser cuadrado y estar completamente aislado sobre fondo magenta chroma puro #FF00FF.\n\n2. El soporte es un pergamino cuadrado envejecido, limpio y sencillo:\n- Sin marco.\n- Sin ribetes.\n- Sin remaches.\n- Sin adornos exteriores.\n- Con textura suave y poco ruido.\n- Ocupando casi toda la imagen.\n\n3. La ilustración:\n- Medieval y dibujada a mano.\n- Tinta y pintura apagada.\n- Inspirada en los iconos clásicos de Ultima Online.\n- Coherente con las escenas narrativas de CRIPTA.\n- Un único elemento protagonista.\n- Silueta clara y alto contraste.\n- Legible a 48x48 y 64x64 píxeles.\n- Sin texto, letras, números ni logotipos.\n- Sin estilo anime, cartoon, 3D moderno o colores neón.\n\n4. Código visual:\n- Pasiva neutra: escala de grises.\n- Pasiva con escuela: gris con pequeños acentos del color de la escuela.\n- Activa: el color de la escuela puede ser predominante, pero apagado y medieval.\n\n5. La composición debe mostrar visualmente qué hace la habilidad sin convertir el icono en una escena compleja.",
+      "imageType": "image/png",
+      "imageFilename": "war_cry.png",
+      "hasImage": true,
+      "imageSource": "https://raw.githubusercontent.com/egoivaldes-code/cripta/main/assets/ui/skills/war_cry.png"
+    },
+    {
+      "id": "cat_reflexes",
+      "name": "Reflejos felinos",
+      "className": "Sin clase",
+      "type": "Pasiva",
+      "school": "Sin escuela",
+      "duration": "Permanente",
+      "cost": "No definido en el juego",
+      "cooldown": "No aplica",
+      "tier1": "+ esquiva leve.",
+      "tier2": "+ esquiva moderada.",
+      "tier3": "+ esquiva alta.",
+      "price1": 500,
+      "price2": 800,
+      "price3": 1100,
+      "description": "Agudiza los reflejos del héroe, aumentando la probabilidad de esquivar ataques.",
+      "iconDesign": "Un ojo felino y una garra en postura rápida, con líneas de movimiento sutiles.",
+      "assetKey": "cat_reflexes",
+      "tags": [
+        "pasiva",
+        "sin escuela",
+        "cat reflexes"
+      ],
+      "notes": "Datos del motor original de CriptaV0.21.2:\n{\n  \"id\": \"cat_reflexes\",\n  \"kind\": \"passive\",\n  \"damageType\": \"none\",\n  \"durationLabel\": \"skillshop.duration.permanent\",\n  \"tiers\": [\n    {\n      \"price\": 500,\n      \"power\": {\n        \"dodgeBonus\": 0.05\n      }\n    },\n    {\n      \"price\": 800,\n      \"power\": {\n        \"dodgeBonus\": 0.1\n      }\n    },\n    {\n      \"price\": 1100,\n      \"power\": {\n        \"dodgeBonus\": 0.15\n      }\n    }\n  ]\n}",
+      "promptText": "CRIPTA — ICONO DE HABILIDAD\n\nNombre: Reflejos felinos\nClase: Sin clase\nTipo: Pasiva\nEscuela o tipo de daño: Sin escuela\nEfecto: Agudiza los reflejos del héroe, aumentando la probabilidad de esquivar ataques.\n\nConcepto visual:\nUn ojo felino y una garra en postura rápida, con líneas de movimiento sutiles.\n\nGenera un icono cuadrado de habilidad para CRIPTA, completamente aislado sobre fondo magenta chroma puro #FF00FF. El icono debe consistir en un pergamino cuadrado envejecido, limpio y sencillo, sin marco, sin ribetes, sin remaches y sin adornos exteriores. El pergamino debe ocupar casi toda la imagen y tener una textura suave, con poco ruido y pocas manchas para conservar la definición.\n\nLa ilustración debe ser medieval, dibujada a mano con tinta y pintura apagada, inspirada en los iconos clásicos de Ultima Online y coherente con las escenas narrativas de CRIPTA. Debe mostrar un único elemento protagonista o una composición muy simple, con silueta clara, alto contraste y lectura inmediata incluso a 48x48 o 64x64 píxeles.\n\nLa habilidad es pasiva neutra: utiliza escala de grises completa.\n\nSin texto, letras, números, logotipos, marcos de interfaz, efectos modernos, colores neón, estilo anime, estilo cartoon ni apariencia 3D. Máxima resolución disponible.\n\nCriterios adicionales de esta colección:\nGUÍA DE CREACIÓN DEL ICONO\n\n1. El icono debe ser cuadrado y estar completamente aislado sobre fondo magenta chroma puro #FF00FF.\n\n2. El soporte es un pergamino cuadrado envejecido, limpio y sencillo:\n- Sin marco.\n- Sin ribetes.\n- Sin remaches.\n- Sin adornos exteriores.\n- Con textura suave y poco ruido.\n- Ocupando casi toda la imagen.\n\n3. La ilustración:\n- Medieval y dibujada a mano.\n- Tinta y pintura apagada.\n- Inspirada en los iconos clásicos de Ultima Online.\n- Coherente con las escenas narrativas de CRIPTA.\n- Un único elemento protagonista.\n- Silueta clara y alto contraste.\n- Legible a 48x48 y 64x64 píxeles.\n- Sin texto, letras, números ni logotipos.\n- Sin estilo anime, cartoon, 3D moderno o colores neón.\n\n4. Código visual:\n- Pasiva neutra: escala de grises.\n- Pasiva con escuela: gris con pequeños acentos del color de la escuela.\n- Activa: el color de la escuela puede ser predominante, pero apagado y medieval.\n\n5. La composición debe mostrar visualmente qué hace la habilidad sin convertir el icono en una escena compleja.",
+      "imageType": "image/png",
+      "imageFilename": "cat_reflexes.png",
+      "hasImage": true,
+      "imageSource": "https://raw.githubusercontent.com/egoivaldes-code/cripta/main/assets/ui/skills/cat_reflexes.png"
+    },
+    {
+      "id": "bloodlust",
+      "name": "Sed de sangre",
+      "className": "Sin clase",
+      "type": "Pasiva",
+      "school": "Físico",
+      "duration": "Durante el combate",
+      "cost": "No definido en el juego",
+      "cooldown": "No aplica",
+      "tier1": "+ daño leve por cada muerte (no acumulable entre combates).",
+      "tier2": "+ daño moderado por cada muerte.",
+      "tier3": "+ daño alto por cada muerte.",
+      "price1": 500,
+      "price2": 900,
+      "price3": 1300,
+      "description": "Cada enemigo derrotado alimenta la furia del héroe, aumentando su daño el resto del combate.",
+      "iconDesign": "Un arma ensangrentada ante una gota de sangre oscura o un corazón feroz.",
+      "assetKey": "bloodlust",
+      "tags": [
+        "pasiva",
+        "físico",
+        "bloodlust"
+      ],
+      "notes": "Datos del motor original de CriptaV0.21.2:\n{\n  \"id\": \"bloodlust\",\n  \"kind\": \"passive\",\n  \"damageType\": \"physical\",\n  \"durationLabel\": \"skillshop.duration.percombat\",\n  \"tiers\": [\n    {\n      \"price\": 500,\n      \"power\": {\n        \"dmgPerKillPct\": 0.05\n      }\n    },\n    {\n      \"price\": 900,\n      \"power\": {\n        \"dmgPerKillPct\": 0.1\n      }\n    },\n    {\n      \"price\": 1300,\n      \"power\": {\n        \"dmgPerKillPct\": 0.15\n      }\n    }\n  ]\n}",
+      "promptText": "CRIPTA — ICONO DE HABILIDAD\n\nNombre: Sed de sangre\nClase: Sin clase\nTipo: Pasiva\nEscuela o tipo de daño: Físico\nEfecto: Cada enemigo derrotado alimenta la furia del héroe, aumentando su daño el resto del combate.\n\nConcepto visual:\nUn arma ensangrentada ante una gota de sangre oscura o un corazón feroz.\n\nGenera un icono cuadrado de habilidad para CRIPTA, completamente aislado sobre fondo magenta chroma puro #FF00FF. El icono debe consistir en un pergamino cuadrado envejecido, limpio y sencillo, sin marco, sin ribetes, sin remaches y sin adornos exteriores. El pergamino debe ocupar casi toda la imagen y tener una textura suave, con poco ruido y pocas manchas para conservar la definición.\n\nLa ilustración debe ser medieval, dibujada a mano con tinta y pintura apagada, inspirada en los iconos clásicos de Ultima Online y coherente con las escenas narrativas de CRIPTA. Debe mostrar un único elemento protagonista o una composición muy simple, con silueta clara, alto contraste y lectura inmediata incluso a 48x48 o 64x64 píxeles.\n\nLa habilidad es pasiva: utiliza una base en escala de grises con pequeños acentos de rojo oscuro, sangre seca y acero envejecido. El color nunca debe dominar.\n\nSin texto, letras, números, logotipos, marcos de interfaz, efectos modernos, colores neón, estilo anime, estilo cartoon ni apariencia 3D. Máxima resolución disponible.\n\nCriterios adicionales de esta colección:\nGUÍA DE CREACIÓN DEL ICONO\n\n1. El icono debe ser cuadrado y estar completamente aislado sobre fondo magenta chroma puro #FF00FF.\n\n2. El soporte es un pergamino cuadrado envejecido, limpio y sencillo:\n- Sin marco.\n- Sin ribetes.\n- Sin remaches.\n- Sin adornos exteriores.\n- Con textura suave y poco ruido.\n- Ocupando casi toda la imagen.\n\n3. La ilustración:\n- Medieval y dibujada a mano.\n- Tinta y pintura apagada.\n- Inspirada en los iconos clásicos de Ultima Online.\n- Coherente con las escenas narrativas de CRIPTA.\n- Un único elemento protagonista.\n- Silueta clara y alto contraste.\n- Legible a 48x48 y 64x64 píxeles.\n- Sin texto, letras, números ni logotipos.\n- Sin estilo anime, cartoon, 3D moderno o colores neón.\n\n4. Código visual:\n- Pasiva neutra: escala de grises.\n- Pasiva con escuela: gris con pequeños acentos del color de la escuela.\n- Activa: el color de la escuela puede ser predominante, pero apagado y medieval.\n\n5. La composición debe mostrar visualmente qué hace la habilidad sin convertir el icono en una escena compleja.",
+      "imageType": "image/png",
+      "imageFilename": "bloodlust.png",
+      "hasImage": true,
+      "imageSource": "https://raw.githubusercontent.com/egoivaldes-code/cripta/main/assets/ui/skills/bloodlust.png"
+    }
+  ]
+};
+const SUPABASE_URL="https://tyilsfxqctrgozlchwxc.supabase.co";
+const SUPABASE_KEY="sb_publishable_iW5vLkuWMvW7Vgoym-RYmw_tvweRYu4";
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});
+const log=document.getElementById('log'), bar=document.getElementById('bar'), go=document.getElementById('go');
+function say(s){log.textContent+=`\n${s}`;log.scrollTop=log.scrollHeight}
+function migrationId(originalId){
+  const clean=String(originalId||'skill').toLowerCase().replace(/[^a-z0-9_]+/g,'_').replace(/^_+|_+$/g,'');
+  return clean.startsWith('skill_') ? clean : `skill_game_${clean}`;
+}
+async function authenticatedUser(){
+  let {data:{session},error}=await sb.auth.getSession();
+  if(error) throw new Error(`Sesión: ${error.message||error}`);
+  if(!session){
+    const signed=await sb.auth.signInAnonymously();
+    if(signed.error) throw new Error(`Inicio de sesión anónimo: ${signed.error.message||signed.error}`);
+    session=signed.data.session;
+  }else{
+    const refreshed=await sb.auth.refreshSession();
+    if(!refreshed.error && refreshed.data.session) session=refreshed.data.session;
+  }
+  const checked=await sb.auth.getUser();
+  if(checked.error || !checked.data.user) throw new Error(`Validación de sesión: ${checked.error?.message||'usuario no disponible'}`);
+  return checked.data.user;
+}
+async function downloadIcon(url){
+  const response=await fetch(url,{cache:'no-store'});
+  if(!response.ok) throw new Error(`Descarga del icono: HTTP ${response.status}`);
+  const blob=await response.blob();
+  if(!blob.type.startsWith('image/')) throw new Error(`Descarga del icono: tipo inesperado ${blob.type||'desconocido'}`);
+  return blob;
+}
+go.addEventListener('click',async()=>{
+ go.disabled=true; log.textContent='Iniciando migración ligera…'; bar.value=0;
+ try{
+   const user=await authenticatedUser();
+   say(`Sesión autenticada: ${user.id}`);
+   let done=0, skipped=0;
+   for(const original of DATA.skills){
+     const skillId=migrationId(original.id);
+     say(`Procesando ${original.name}…`);
+     say(`  ID del editor: ${skillId}`);
+     const {data:exists,error:checkErr}=await sb.from('skills').select('id').eq('id',skillId).maybeSingle();
+     if(checkErr) throw new Error(`Consulta de habilidades: ${checkErr.message||checkErr}`);
+     if(exists){say('  Ya existe: se omite.');skipped++;bar.value=++done;continue;}
+
+     say('  Descargando icono desde el repositorio de CRIPTA…');
+     const blob=await downloadIcon(original.imageSource);
+     const path=`${user.id}/${skillId}.png`;
+     say('  Subiendo icono a Storage…');
+     const up=await sb.storage.from('skill-icons').upload(path,blob,{contentType:blob.type||'image/png',upsert:true,cacheControl:'3600'});
+     if(up.error) throw new Error(`Storage: ${up.error.message||up.error}`);
+     say('  Icono subido.');
+
+     const copy={...original};
+     delete copy.imageSource;delete copy.id;delete copy.ownerId;delete copy.author;delete copy.imagePath;delete copy.imageUrl;
+     copy.hasImage=true;
+     copy.sourceGameId=original.id;
+     copy.imageFilename=`${skillId}.png`;
+     say('  Creando habilidad en la base de datos…');
+     const ins=await sb.from('skills').insert({
+       id:skillId,
+       owner_id:user.id,
+       author:localStorage.getItem('cripta_author_name_v1')||'Importación CRIPTA',
+       payload:copy,
+       image_path:path
+     });
+     if(ins.error){
+       await sb.storage.from('skill-icons').remove([path]);
+       throw new Error(`Base de datos: ${ins.error.message||ins.error}`);
+     }
+     say('  Importada con icono.');
+     bar.value=++done;
+   }
+   say(`\nTerminado: ${done-skipped} nuevas, ${skipped} ya existentes.`);
+   say('Pulsa “Volver al editor” para revisarlas.');
+ }catch(e){console.error(e);say(`\nERROR: ${e.message||e}`);go.disabled=false}
+});
+</script></body></html>
