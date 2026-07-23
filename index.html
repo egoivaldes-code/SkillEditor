@@ -1,0 +1,1579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRIPTA — Creador de Habilidades</title>
+<style>
+:root{
+  --bg:#15120f;
+  --panel:#241e17;
+  --panel2:#2d251c;
+  --line:#6c5840;
+  --line2:#8c704c;
+  --text:#eee4d2;
+  --muted:#b9aa91;
+  --accent:#b68a4a;
+  --danger:#9c433d;
+  --ok:#577953;
+  --input:#17130f;
+  --shadow:rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  min-height:100vh;
+  font-family:Georgia,"Times New Roman",serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 50% -20%,#322719 0,#1b1611 42%,#12100d 100%);
+}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed;opacity:.45}
+.app{max-width:1220px;margin:auto;padding:18px}
+.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:14px;
+  padding-bottom:14px;
+  margin-bottom:18px;
+  border-bottom:1px solid var(--line);
+}
+.brand h1{margin:0;font-size:1.5rem}
+.brand p{margin:4px 0 0;color:var(--muted);font-size:.92rem}
+.actions{display:flex;flex-wrap:wrap;gap:8px}
+.btn{
+  border:1px solid var(--line);
+  border-radius:5px;
+  padding:9px 13px;
+  background:#342a20;
+  color:var(--text);
+}
+.btn:hover:not(:disabled){filter:brightness(1.13)}
+.btn.primary{background:#5a4328;border-color:#a27a48}
+.btn.success{background:#304a30;border-color:#557a52}
+.btn.danger{background:#572723;border-color:#94423d}
+.btn.ghost{background:transparent}
+.screen{display:none}
+.screen.active{display:block}
+.toolbar{
+  display:grid;
+  grid-template-columns:minmax(220px,1fr) 190px 190px;
+  gap:10px;
+  margin-bottom:12px;
+}
+input,select,textarea{
+  width:100%;
+  border:1px solid var(--line);
+  border-radius:4px;
+  padding:10px;
+  background:var(--input);
+  color:var(--text);
+  outline:none;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+textarea{min-height:100px;resize:vertical}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(290px,1fr));
+  gap:14px;
+}
+.card{
+  display:flex;
+  gap:12px;
+  min-height:165px;
+  padding:14px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:linear-gradient(180deg,var(--panel2),var(--panel));
+  box-shadow:0 6px 16px var(--shadow);
+}
+.thumb{
+  flex:0 0 88px;
+  width:88px;
+  height:88px;
+  display:grid;
+  place-items:center;
+  padding:5px;
+  border:1px solid #8d795c;
+  border-radius:4px;
+  background:#ff00ff center/cover no-repeat;
+  color:#35172f;
+  font-size:.72rem;
+  text-align:center;
+}
+.card-body{min-width:0;flex:1}
+.card h3{margin:0 0 5px;font-size:1.08rem;overflow-wrap:anywhere}
+.meta{color:var(--muted);font-size:.86rem;line-height:1.45}
+.desc{margin-top:7px;font-size:.9rem;line-height:1.38}
+.card-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.card-actions .btn{padding:6px 9px;font-size:.82rem}
+.empty{
+  padding:44px 20px;
+  border:1px dashed var(--line);
+  border-radius:7px;
+  color:var(--muted);
+  text-align:center;
+}
+.editor-layout{
+  display:grid;
+  grid-template-columns:minmax(0,1.48fr) minmax(310px,.82fr);
+  gap:18px;
+}
+.panel{
+  padding:16px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  background:var(--panel);
+  box-shadow:0 6px 16px var(--shadow);
+}
+.panel h2,.panel h3{margin-top:0}
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+.field.full{grid-column:1/-1}
+label{
+  display:block;
+  margin-bottom:5px;
+  color:#d6c7ad;
+  font-size:.9rem;
+}
+.helper{margin-top:5px;color:var(--muted);font-size:.78rem}
+.inline{display:flex;gap:8px;align-items:center}
+.image-preview{
+  width:180px;
+  height:180px;
+  display:grid;
+  place-items:center;
+  margin-bottom:10px;
+  padding:10px;
+  border:1px solid #8f6c87;
+  border-radius:5px;
+  background:#ff00ff center/contain no-repeat;
+  color:#32172e;
+  text-align:center;
+}
+.code-name{
+  color:#deb978;
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  overflow-wrap:anywhere;
+}
+.tabs{display:flex;gap:4px;margin:14px 0 10px}
+.tab{
+  flex:1;
+  padding:9px;
+  border:1px solid var(--line);
+  background:#2b241c;
+  color:var(--muted);
+}
+.tab.active{background:#594326;color:var(--text)}
+.tabpane{display:none}
+.tabpane.active{display:block}
+.prompt-box{
+  min-height:340px;
+  font-family:ui-monospace,SFMono-Regular,Consolas,monospace;
+  font-size:.82rem;
+  line-height:1.45;
+}
+.small{color:var(--muted);font-size:.82rem}
+.footer-actions{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-top:18px;
+}
+.badge{
+  display:inline-block;
+  margin:0 4px 4px 0;
+  padding:2px 7px;
+  border:1px solid var(--line);
+  border-radius:999px;
+  color:#d9c6a6;
+  font-size:.75rem;
+}
+.status-line{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom:12px;
+  color:var(--muted);
+  font-size:.84rem;
+}
+.preview-card{
+  margin-top:14px;
+  padding:12px;
+  border:1px solid var(--line);
+  border-radius:5px;
+  background:#1a1612;
+}
+.preview-card h4{margin:0 0 8px}
+.preview-row{margin:5px 0;font-size:.86rem}
+.toast{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:10;
+  max-width:340px;
+  padding:10px 14px;
+  border:1px solid #557a52;
+  border-radius:5px;
+  background:#2e432d;
+  color:white;
+  opacity:0;
+  transform:translateY(8px);
+  pointer-events:none;
+  transition:.2s;
+}
+.toast.show{opacity:1;transform:translateY(0)}
+.confirm{
+  position:fixed;
+  inset:0;
+  z-index:20;
+  display:none;
+  place-items:center;
+  padding:18px;
+  background:rgba(0,0,0,.65);
+}
+.confirm.open{display:grid}
+.confirm-box{
+  width:min(430px,100%);
+  padding:18px;
+  border:1px solid var(--line2);
+  border-radius:7px;
+  background:var(--panel);
+}
+.confirm-box h3{margin-top:0}
+.confirm-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+@media(max-width:820px){
+  .editor-layout{grid-template-columns:1fr}
+  .toolbar{grid-template-columns:1fr}
+  .form-grid{grid-template-columns:1fr}
+  .field.full{grid-column:auto}
+  .topbar{align-items:flex-start;flex-direction:column}
+  .image-preview{width:150px;height:150px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <h1>CRIPTA — Creador de Habilidades</h1>
+      <p>Biblioteca, fichas, iconos y prompts en un único archivo HTML.</p>
+    </div>
+    <div class="actions" id="headerActions">
+      <button class="btn primary" id="newBtn" type="button">+ Crear habilidad</button>
+      <button class="btn" id="exportBtn" type="button">Exportar todas a MD</button>
+      <button class="btn" id="backupBtn" type="button">Copia JSON</button>
+      <label class="btn" for="restoreInput">Importar JSON</label>
+      <input id="restoreInput" type="file" accept=".json,application/json" hidden>
+    </div>
+  </header>
+
+  <main>
+    <section id="libraryScreen" class="screen active">
+      <div class="toolbar">
+        <input id="searchInput" placeholder="Buscar por nombre, clase o descripción">
+        <select id="classFilter"><option value="">Todas las clases</option></select>
+        <select id="typeFilter">
+          <option value="">Activas y pasivas</option>
+          <option value="Activa">Activas</option>
+          <option value="Pasiva">Pasivas</option>
+        </select>
+      </div>
+
+      <div class="panel" style="margin-bottom:12px;padding:12px">
+        <strong>Usuario:</strong> <span id="onlineAuthor">Conectando…</span>
+        <button class="btn" id="changeAuthorBtn" type="button" style="margin-left:8px">Cambiar nombre</button>
+        <div class="hint" style="margin-top:6px">Identidad del dispositivo: <code id="onlineUserId">—</code>. Guarda este código para hacerte administrador.</div>
+      </div>
+      <div class="status-line">
+        <span id="stats">0 habilidades</span>
+        <span>Biblioteca compartida en Supabase</span>
+      </div>
+
+      <div id="skillGrid" class="grid"></div>
+    </section>
+
+    <section id="editorScreen" class="screen">
+      <div class="editor-layout">
+        <div class="panel">
+          <h2 id="editorTitle">Nueva habilidad</h2>
+
+          <div class="form-grid">
+            <div class="field full">
+              <label for="name">Nombre</label>
+              <input id="name" placeholder="Ej.: Precisión carnicera">
+            </div>
+
+            <div class="field">
+              <label for="className">Clase</label>
+              <select id="className"></select>
+            </div>
+
+            <div class="field">
+              <label for="type">Tipo</label>
+              <select id="type">
+                <option value="Pasiva">Pasiva</option>
+                <option value="Activa">Activa</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="school">Escuela / tipo de daño</label>
+              <select id="school"></select>
+            </div>
+
+            <div class="field">
+              <label for="duration">Duración</label>
+              <select id="duration">
+                <option value="Permanente">Permanente</option>
+                <option value="Instantánea">Instantánea</option>
+                <option value="1 turno">1 turno</option>
+                <option value="2 turnos">2 turnos</option>
+                <option value="3 turnos">3 turnos</option>
+                <option value="4 turnos">4 turnos</option>
+                <option value="5 turnos">5 turnos</option>
+                <option value="Personalizada">Personalizada</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="customDuration">Duración personalizada</label>
+              <input id="customDuration" placeholder="Ej.: Hasta recibir daño" disabled>
+            </div>
+
+            <div class="field">
+              <label for="cost">Coste</label>
+              <input id="cost" placeholder="Ej.: 2 PA / No aplica">
+            </div>
+
+            <div class="field">
+              <label for="cooldown">Enfriamiento</label>
+              <input id="cooldown" placeholder="Ej.: 3 turnos / No aplica">
+            </div>
+
+            <div class="field">
+              <label for="tier1">Tier I</label>
+              <input id="tier1" placeholder="Ej.: +5% crítico">
+            </div>
+
+            <div class="field">
+              <label for="tier2">Tier II</label>
+              <input id="tier2" placeholder="Ej.: +10% crítico">
+            </div>
+
+            <div class="field">
+              <label for="tier3">Tier III</label>
+              <input id="tier3" placeholder="Ej.: +15% crítico">
+            </div>
+
+            <div class="field">
+              <label for="price1">Precio Tier I</label>
+              <input id="price1" type="number" min="0" step="1" value="500">
+            </div>
+
+            <div class="field">
+              <label for="price2">Precio Tier II</label>
+              <input id="price2" type="number" min="0" step="1" value="750">
+            </div>
+
+            <div class="field">
+              <label for="price3">Precio Tier III</label>
+              <input id="price3" type="number" min="0" step="1" value="1000">
+            </div>
+
+            <div class="field full">
+              <label for="description">Qué hace</label>
+              <textarea id="description" placeholder="Descripción clara y funcional de la habilidad"></textarea>
+            </div>
+
+            <div class="field full">
+              <label for="iconDesign">Diseño del icono</label>
+              <textarea id="iconDesign" placeholder="Elemento protagonista, composición, gesto, símbolos y acentos de color"></textarea>
+            </div>
+
+            <div class="field">
+              <label for="assetKey">Nombre inglés del recurso</label>
+              <input id="assetKey" placeholder="Ej.: butcherprecision">
+              <div class="helper">Editable. Se combinará con la clase: warrior_butcherprecision.png</div>
+            </div>
+
+            <div class="field">
+              <label for="tags">Etiquetas</label>
+              <input id="tags" placeholder="crítico, arma, daño">
+              <div class="helper">Separadas por comas.</div>
+            </div>
+
+            <div class="field full">
+              <label for="notes">Notas internas</label>
+              <textarea id="notes" placeholder="Balance, sinergias, pendientes, observaciones..."></textarea>
+            </div>
+          </div>
+
+          <div class="footer-actions">
+            <button class="btn ghost" id="cancelBtn" type="button">← Volver sin guardar</button>
+            <div class="actions">
+              <button class="btn" id="duplicateFromEditorBtn" type="button">Duplicar</button>
+              <button class="btn success" id="saveBtn" type="button">Guardar habilidad</button>
+            </div>
+          </div>
+        </div>
+
+        <aside class="panel">
+          <h3>Icono y prompt</h3>
+
+          <div id="imagePreview" class="image-preview">Sin imagen</div>
+          <input id="imageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif">
+          <p class="small">
+            La imagen queda asociada a la habilidad. El navegador no puede cambiar el nombre
+            del archivo original, pero permite descargar una copia con el nombre correcto.
+          </p>
+
+          <p>
+            <strong>Nombre recomendado:</strong><br>
+            <span id="imageFileName" class="code-name">—</span>
+          </p>
+
+          <div class="actions">
+            <button id="downloadImageBtn" class="btn" type="button" disabled>Descargar renombrada</button>
+            <button id="removeImageBtn" class="btn danger" type="button" disabled>Quitar imagen</button>
+          </div>
+
+          <div class="tabs">
+            <button class="tab active" data-tab="finalPrompt" type="button">Prompt final</button>
+            <button class="tab" data-tab="promptGuide" type="button">Guía del prompt</button>
+          </div>
+
+          <div id="finalPrompt" class="tabpane active">
+            <textarea id="promptText" class="prompt-box"></textarea>
+            <div class="actions" style="margin-top:8px">
+              <button id="generatePromptBtn" class="btn" type="button">Regenerar prompt</button>
+              <button id="copyPromptBtn" class="btn primary" type="button">Copiar prompt</button>
+            </div>
+          </div>
+
+          <div id="promptGuide" class="tabpane">
+            <textarea id="promptGuideText" class="prompt-box"></textarea>
+            <div class="actions" style="margin-top:8px">
+              <button id="resetGuideBtn" class="btn" type="button">Restaurar guía base</button>
+            </div>
+          </div>
+
+          <div class="preview-card">
+            <h4>Vista rápida</h4>
+            <div id="livePreview"></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div id="toast" class="toast" aria-live="polite"></div>
+
+<div id="confirmDialog" class="confirm" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+  <div class="confirm-box">
+    <h3 id="confirmTitle">Confirmar</h3>
+    <p id="confirmMessage"></p>
+    <div class="confirm-actions">
+      <button class="btn" id="confirmCancel" type="button">Cancelar</button>
+      <button class="btn danger" id="confirmAccept" type="button">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  "use strict";
+
+  const STORAGE_KEY = "cripta_skill_creator_online_cache_v1";
+  const GUIDE_KEY = "cripta_skill_prompt_guide_v1";
+  const AUTHOR_KEY = "cripta_author_name_v1";
+  const SUPABASE_URL = "https://tyilsfxqctrgozlchwxc.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_iW5vLkuWMvW7Vgoym-RYmw_tvweRYu4";
+  const SKILLS_TABLE = "skills";
+  const ICON_BUCKET = "skill-icons";
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth: { persistSession:true, autoRefreshToken:true, detectSessionInUrl:false }
+  });
+
+  const CLASSES = [
+    ["Guerrero","warrior"],
+    ["Paladín","paladin"],
+    ["Mago","mage"],
+    ["Druida","druid"],
+    ["Clérigo","cleric"],
+    ["Asesino","assassin"],
+    ["Cazador","hunter"],
+    ["Brujo","warlock"],
+    ["Bárbaro","barbarian"],
+    ["Pícaro","rogue"],
+    ["Nigromante","necromancer"],
+    ["Monje","monk"],
+    ["Sin clase","unassigned"]
+  ];
+
+  const SCHOOLS = [
+    "Físico","Fuego","Hielo","Naturaleza","Sombras",
+    "Sagrado","Arcano","Veneno","Defensa","Curación","Control","Sin escuela"
+  ];
+
+  const COLOR_RULES = {
+    "Físico":"rojo oscuro, sangre seca y acero envejecido",
+    "Fuego":"naranja quemado, ámbar y rojo de brasa",
+    "Hielo":"azul frío, azul grisáceo y blanco azulado",
+    "Naturaleza":"verde musgo, verde hoja y marrones vegetales",
+    "Sombras":"morado oscuro, violeta apagado y negro",
+    "Sagrado":"dorado envejecido, marfil y amarillo cálido",
+    "Arcano":"azul profundo y cian apagado",
+    "Veneno":"verde enfermizo y verde amarillento",
+    "Defensa":"grises de piedra, hierro y acero",
+    "Curación":"verde suave, marfil y dorado tenue",
+    "Control":"azul grisáceo y violeta apagado",
+    "Sin escuela":"escala de grises"
+  };
+
+  const DEFAULT_GUIDE = `GUÍA DE CREACIÓN DEL ICONO
+
+1. El icono debe ser cuadrado y estar completamente aislado sobre fondo magenta chroma puro #FF00FF.
+
+2. El soporte es un pergamino cuadrado envejecido, limpio y sencillo:
+- Sin marco.
+- Sin ribetes.
+- Sin remaches.
+- Sin adornos exteriores.
+- Con textura suave y poco ruido.
+- Ocupando casi toda la imagen.
+
+3. La ilustración:
+- Medieval y dibujada a mano.
+- Tinta y pintura apagada.
+- Inspirada en los iconos clásicos de Ultima Online.
+- Coherente con las escenas narrativas de CRIPTA.
+- Un único elemento protagonista.
+- Silueta clara y alto contraste.
+- Legible a 48x48 y 64x64 píxeles.
+- Sin texto, letras, números ni logotipos.
+- Sin estilo anime, cartoon, 3D moderno o colores neón.
+
+4. Código visual:
+- Pasiva neutra: escala de grises.
+- Pasiva con escuela: gris con pequeños acentos del color de la escuela.
+- Activa: el color de la escuela puede ser predominante, pero apagado y medieval.
+
+5. La composición debe mostrar visualmente qué hace la habilidad sin convertir el icono en una escena compleja.`;
+
+  let skills = [];
+  let editingId = null;
+  let currentImageBlob = null;
+  let currentImageUrl = "";
+  let currentImageType = "image/png";
+  let currentImageRemoved = false;
+  let currentExistingImagePath = "";
+  let confirmAction = null;
+  let currentUser = null;
+  let isAdmin = false;
+  let authorName = localStorage.getItem(AUTHOR_KEY) || "";
+  const imageUrlCache = new Map();
+
+  const $ = id => document.getElementById(id);
+  const libraryScreen = $("libraryScreen");
+  const editorScreen = $("editorScreen");
+
+  const fields = {
+    name:$("name"),
+    className:$("className"),
+    type:$("type"),
+    school:$("school"),
+    duration:$("duration"),
+    customDuration:$("customDuration"),
+    cost:$("cost"),
+    cooldown:$("cooldown"),
+    tier1:$("tier1"),
+    tier2:$("tier2"),
+    tier3:$("tier3"),
+    price1:$("price1"),
+    price2:$("price2"),
+    price3:$("price3"),
+    description:$("description"),
+    iconDesign:$("iconDesign"),
+    assetKey:$("assetKey"),
+    tags:$("tags"),
+    notes:$("notes"),
+    promptText:$("promptText")
+  };
+
+  function revokeCurrentImageUrl(){
+    if(currentImageUrl && currentImageUrl.startsWith("blob:")){
+      URL.revokeObjectURL(currentImageUrl);
+    }
+    currentImageUrl = "";
+  }
+
+  function dataUrlToBlob(dataUrl){
+    const [header, payload] = dataUrl.split(",");
+    const mime = (header.match(/data:([^;]+)/) || [,"application/octet-stream"])[1];
+    const binary = atob(payload);
+    const bytes = new Uint8Array(binary.length);
+    for(let i=0; i<binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], {type:mime});
+  }
+
+  function blobToDataUrl(blob){
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  async function ensureAnonymousSession(){
+    const { data:{ session }, error:sessionError } = await sb.auth.getSession();
+    if(sessionError) throw sessionError;
+
+    if(session?.user){
+      currentUser = session.user;
+    }else{
+      const { data, error } = await sb.auth.signInAnonymously();
+      if(error) throw error;
+      currentUser = data.user;
+    }
+
+    const { data:adminFlag, error:adminError } = await sb.rpc("is_skill_admin");
+    if(!adminError) isAdmin = Boolean(adminFlag);
+  }
+
+  async function loadSkills(){
+    const { data, error } = await sb
+      .from(SKILLS_TABLE)
+      .select("*")
+      .order("updated_at", {ascending:false});
+
+    if(error) throw error;
+
+    skills = (data || []).map(row => ({
+      ...(row.payload || {}),
+      id: row.id,
+      ownerId: row.owner_id,
+      author: row.author,
+      imagePath: row.image_path || "",
+      hasImage: Boolean(row.image_path),
+      createdAt: row.created_at,
+      updatedAt: row.updated_at
+    }));
+  }
+
+  function saveSkills(){
+    return true;
+  }
+
+  function canManage(skill){
+    return Boolean(currentUser && (isAdmin || skill.ownerId === currentUser.id));
+  }
+
+  function publicImageUrl(path){
+    if(!path) return "";
+    if(imageUrlCache.has(path)) return imageUrlCache.get(path);
+    const { data } = sb.storage.from(ICON_BUCKET).getPublicUrl(path);
+    const url = data?.publicUrl || "";
+    imageUrlCache.set(path, url);
+    return url;
+  }
+
+  async function getCachedImageUrl(id){
+    const skill = skills.find(item => item.id === id);
+    return skill?.imagePath ? publicImageUrl(skill.imagePath) : "";
+  }
+
+  async function uploadSkillImage(skillId, blob){
+    const ext = mimeExtension(blob.type || currentImageType);
+    const path = `${currentUser.id}/${skillId}.${ext}`;
+
+    const { error } = await sb.storage
+      .from(ICON_BUCKET)
+      .upload(path, blob, {
+        contentType: blob.type || currentImageType,
+        upsert: true,
+        cacheControl: "3600"
+      });
+
+    if(error) throw error;
+    imageUrlCache.delete(path);
+    return path;
+  }
+
+  async function deleteStoredImage(path){
+    if(!path) return;
+    const { error } = await sb.storage.from(ICON_BUCKET).remove([path]);
+    if(error) throw error;
+    imageUrlCache.delete(path);
+  }
+
+  function uid(){
+    return "skill_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,10);
+  }
+
+  function skillFingerprint(skill){
+    const normalized = {
+      name: String(skill.name || "").trim().toLowerCase(),
+      className: skill.className || "",
+      type: skill.type || "",
+      school: skill.school || "",
+      duration: skill.duration || "",
+      cost: skill.cost || "",
+      cooldown: skill.cooldown || "",
+      tier1: skill.tier1 || "",
+      tier2: skill.tier2 || "",
+      tier3: skill.tier3 || "",
+      price1: Number(skill.price1 || 0),
+      price2: Number(skill.price2 || 0),
+      price3: Number(skill.price3 || 0),
+      description: skill.description || "",
+      iconDesign: skill.iconDesign || "",
+      assetKey: skill.assetKey || "",
+      tags: Array.isArray(skill.tags) ? [...skill.tags].sort() : [],
+      notes: skill.notes || "",
+      promptText: skill.promptText || ""
+    };
+    return JSON.stringify(normalized);
+  }
+
+  function normalize(text){
+    return String(text || "")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g,"")
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g,"")
+      .trim();
+  }
+
+  function classSlug(className){
+    return (CLASSES.find(c => c[0] === className) || ["","unassigned"])[1];
+  }
+
+  function suggestAssetKey(name){
+    const special = {
+      "precisioncarnicera":"butcherprecision"
+    };
+    const key = normalize(name);
+    return special[key] || key || "skill";
+  }
+
+  function getRecommendedFilename(){
+    const cls = classSlug(fields.className.value);
+    const key = normalize(fields.assetKey.value) || suggestAssetKey(fields.name.value);
+    const ext = mimeExtension(currentImageType);
+    return `${cls}_${key}.${ext}`;
+  }
+
+  function mimeExtension(type){
+    if(type === "image/jpeg") return "jpg";
+    if(type === "image/webp") return "webp";
+    if(type === "image/gif") return "gif";
+    return "png";
+  }
+
+  function fillSelects(){
+    fields.className.innerHTML = CLASSES.map(([name]) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
+    $("classFilter").innerHTML = `<option value="">Todas las clases</option>` +
+      CLASSES.map(([name]) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
+    fields.school.innerHTML = SCHOOLS.map(s => `<option value="${escapeHtml(s)}">${escapeHtml(s)}</option>`).join("");
+  }
+
+  function escapeHtml(value){
+    return String(value ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function showScreen(name){
+    const isLibrary = name === "library";
+    libraryScreen.classList.toggle("active", isLibrary);
+    editorScreen.classList.toggle("active", !isLibrary);
+
+    // Las acciones generales pertenecen a la biblioteca.
+    // Al crear o editar se ocultan para evitar botones duplicados o confusos.
+    $("headerActions").style.display = isLibrary ? "flex" : "none";
+
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+
+  function showToast(message, danger=false){
+    const toast = $("toast");
+    toast.textContent = message;
+    toast.style.background = danger ? "#5b2926" : "#2e432d";
+    toast.style.borderColor = danger ? "#94423d" : "#557a52";
+    toast.classList.add("show");
+    clearTimeout(showToast.timer);
+    showToast.timer = setTimeout(() => toast.classList.remove("show"), 2400);
+  }
+
+  function openConfirm(message, callback){
+    $("confirmMessage").textContent = message;
+    confirmAction = callback;
+    $("confirmDialog").classList.add("open");
+  }
+
+  function closeConfirm(){
+    $("confirmDialog").classList.remove("open");
+    confirmAction = null;
+  }
+
+  async function renderLibrary(){
+    const query = normalize($("searchInput").value);
+    const classValue = $("classFilter").value;
+    const typeValue = $("typeFilter").value;
+
+    const filtered = skills
+      .filter(skill => {
+        const haystack = normalize([
+          skill.name, skill.className, skill.type, skill.school,
+          skill.description, skill.tags, skill.assetKey, skill.author
+        ].join(" "));
+        return (!query || haystack.includes(query))
+          && (!classValue || skill.className === classValue)
+          && (!typeValue || skill.type === typeValue);
+      })
+      .sort((a,b) => (a.className + a.name).localeCompare(b.className + b.name, "es"));
+
+    $("stats").textContent =
+      `${filtered.length} mostrada${filtered.length === 1 ? "" : "s"} · ${skills.length} total${skills.length === 1 ? "" : "es"} · Autor: ${authorName}${isAdmin ? " · ADMIN" : ""}`;
+
+    const grid = $("skillGrid");
+    if(!filtered.length){
+      grid.innerHTML = `<div class="empty">
+        <strong>No hay habilidades que mostrar.</strong><br>
+        Crea la primera o cambia los filtros.
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(skill => {
+      const tags = (skill.tags || []).slice(0,4).map(t => `<span class="badge">${escapeHtml(t)}</span>`).join("");
+      const manageable = canManage(skill);
+      return `<article class="card">
+        <div class="thumb" data-image-id="${skill.id}">${skill.hasImage ? "" : "Sin icono"}</div>
+        <div class="card-body">
+          <h3>${escapeHtml(skill.name || "Sin nombre")}</h3>
+          <div class="meta">
+            ${escapeHtml(skill.className)} · ${escapeHtml(skill.type)}<br>
+            ${escapeHtml(skill.school)} · ${escapeHtml(skill.duration)}<br>
+            Autor: ${escapeHtml(skill.author || "Sin nombre")}${manageable ? " · Tuya" : ""}
+          </div>
+          <div class="desc">${escapeHtml(skill.description || "Sin descripción")}</div>
+          <div style="margin-top:7px">${tags}</div>
+          <div class="card-actions">
+            ${manageable ? `<button class="btn" data-action="edit" data-id="${skill.id}" type="button">Editar</button>` : ""}
+            <button class="btn" data-action="duplicate" data-id="${skill.id}" type="button">Duplicar</button>
+            ${manageable ? `<button class="btn danger" data-action="delete" data-id="${skill.id}" type="button">Eliminar</button>` : ""}
+          </div>
+        </div>
+      </article>`;
+    }).join("");
+
+    await Promise.all(filtered.filter(s => s.hasImage).map(async skill => {
+      const thumb = grid.querySelector(`[data-image-id="${skill.id}"]`);
+      if(!thumb) return;
+      const url = await getCachedImageUrl(skill.id);
+      if(url){
+        thumb.style.backgroundImage = `url("${url}")`;
+        thumb.textContent = "";
+      }
+    }));
+  }
+
+  function resetEditor(){
+    editingId = null;
+    revokeCurrentImageUrl();
+    currentImageBlob = null;
+    currentImageType = "image/png";
+    currentImageRemoved = false;
+    currentExistingImagePath = "";
+    $("editorTitle").textContent = "Nueva habilidad";
+
+    fields.name.value = "";
+    fields.className.value = "Guerrero";
+    fields.type.value = "Pasiva";
+    fields.school.value = "Físico";
+    fields.duration.value = "Permanente";
+    fields.customDuration.value = "";
+    fields.customDuration.disabled = true;
+    fields.cost.value = "No aplica";
+    fields.cooldown.value = "No aplica";
+    fields.tier1.value = "";
+    fields.tier2.value = "";
+    fields.tier3.value = "";
+    fields.price1.value = "500";
+    fields.price2.value = "750";
+    fields.price3.value = "1000";
+    fields.description.value = "";
+    fields.iconDesign.value = "";
+    fields.assetKey.value = "";
+    fields.tags.value = "";
+    fields.notes.value = "";
+    fields.promptText.value = "";
+    $("imageInput").value = "";
+    updateImageUI();
+    updateLivePreview();
+    generatePrompt();
+  }
+
+  async function openEditor(skill=null, duplicate=false){
+    resetEditor();
+
+    if(skill){
+      if(!duplicate && !canManage(skill)){
+        showToast("Solo el autor puede editar esta habilidad.", true);
+        return;
+      }
+      editingId = duplicate ? null : skill.id;
+      $("editorTitle").textContent = duplicate ? "Duplicar habilidad" : "Editar habilidad";
+      fields.name.value = duplicate ? `${skill.name} (copia)` : skill.name;
+      fields.className.value = skill.className || "Guerrero";
+      fields.type.value = skill.type || "Pasiva";
+      fields.school.value = skill.school || "Físico";
+
+      const standardDurations = [...fields.duration.options].map(o => o.value);
+      if(standardDurations.includes(skill.duration)){
+        fields.duration.value = skill.duration;
+        fields.customDuration.value = "";
+      }else{
+        fields.duration.value = "Personalizada";
+        fields.customDuration.value = skill.duration || "";
+      }
+      fields.customDuration.disabled = fields.duration.value !== "Personalizada";
+
+      fields.cost.value = skill.cost || "";
+      fields.cooldown.value = skill.cooldown || "";
+      fields.tier1.value = skill.tier1 || "";
+      fields.tier2.value = skill.tier2 || "";
+      fields.tier3.value = skill.tier3 || "";
+      fields.price1.value = skill.price1 ?? 500;
+      fields.price2.value = skill.price2 ?? 750;
+      fields.price3.value = skill.price3 ?? 1000;
+      fields.description.value = skill.description || "";
+      fields.iconDesign.value = skill.iconDesign || "";
+      fields.assetKey.value = duplicate ? `${skill.assetKey || suggestAssetKey(skill.name)}copy` : (skill.assetKey || "");
+      fields.tags.value = Array.isArray(skill.tags) ? skill.tags.join(", ") : (skill.tags || "");
+      fields.notes.value = skill.notes || "";
+      fields.promptText.value = skill.promptText || "";
+      currentExistingImagePath = duplicate ? "" : (skill.imagePath || "");
+      currentImageBlob = null;
+      currentImageType = skill.imageType || "image/png";
+      currentImageUrl = skill.imagePath ? publicImageUrl(skill.imagePath) : "";
+    }
+
+    updateImageUI();
+    updateLivePreview();
+    if(!fields.promptText.value) generatePrompt();
+    showScreen("editor");
+  }
+
+  function collectSkill(){
+    const duration = fields.duration.value === "Personalizada"
+      ? fields.customDuration.value.trim()
+      : fields.duration.value;
+
+    return {
+      id: editingId || uid(),
+      name: fields.name.value.trim(),
+      className: fields.className.value,
+      type: fields.type.value,
+      school: fields.school.value,
+      duration: duration || "Sin definir",
+      cost: fields.cost.value.trim() || "Sin definir",
+      cooldown: fields.cooldown.value.trim() || "Sin definir",
+      tier1: fields.tier1.value.trim(),
+      tier2: fields.tier2.value.trim(),
+      tier3: fields.tier3.value.trim(),
+      price1: Number(fields.price1.value || 0),
+      price2: Number(fields.price2.value || 0),
+      price3: Number(fields.price3.value || 0),
+      description: fields.description.value.trim(),
+      iconDesign: fields.iconDesign.value.trim(),
+      assetKey: normalize(fields.assetKey.value) || suggestAssetKey(fields.name.value),
+      tags: fields.tags.value.split(",").map(t => t.trim()).filter(Boolean),
+      notes: fields.notes.value.trim(),
+      promptText: fields.promptText.value.trim(),
+      hasImage: !currentImageRemoved && Boolean(currentImageBlob || currentExistingImagePath),
+      imageType: currentImageType,
+      imageFilename: getRecommendedFilename(),
+      updatedAt: new Date().toISOString()
+    };
+  }
+
+  function validateSkill(skill){
+    const errors = [];
+    if(!skill.name) errors.push("Falta el nombre.");
+    if(!skill.description) errors.push("Falta la descripción.");
+    if(!skill.iconDesign) errors.push("Falta el diseño del icono.");
+    if(!skill.tier1 || !skill.tier2 || !skill.tier3) errors.push("Debes definir los tres tiers.");
+    return errors;
+  }
+
+  async function saveCurrentSkill(){
+    generatePrompt();
+    const skill = collectSkill();
+    const errors = validateSkill(skill);
+
+    if(errors.length){
+      showToast(errors[0], true);
+      return;
+    }
+
+    const existing = skills.find(s => s.id === skill.id);
+    if(existing && !canManage(existing)){
+      showToast("No puedes modificar una habilidad de otro autor.", true);
+      return;
+    }
+
+    try{
+      let imagePath = currentExistingImagePath || "";
+
+      if(currentImageRemoved){
+        if(imagePath) await deleteStoredImage(imagePath);
+        imagePath = "";
+      }else if(currentImageBlob){
+        if(imagePath) await deleteStoredImage(imagePath);
+        imagePath = await uploadSkillImage(skill.id, currentImageBlob);
+      }
+
+      const payload = {...skill};
+      delete payload.id;
+      delete payload.ownerId;
+      delete payload.author;
+      delete payload.imagePath;
+      delete payload.createdAt;
+      delete payload.updatedAt;
+
+      if(existing){
+        const { error } = await sb
+          .from(SKILLS_TABLE)
+          .update({
+            payload,
+            author: authorName,
+            image_path: imagePath
+          })
+          .eq("id", skill.id);
+        if(error) throw error;
+        showToast("Habilidad actualizada.");
+      }else{
+        const { error } = await sb
+          .from(SKILLS_TABLE)
+          .insert({
+            id: skill.id,
+            owner_id: currentUser.id,
+            author: authorName,
+            payload,
+            image_path: imagePath
+          });
+        if(error) throw error;
+        showToast("Habilidad creada.");
+      }
+
+      await loadSkills();
+      await renderLibrary();
+      showScreen("library");
+    }catch(error){
+      console.error(error);
+      showToast(`No se pudo guardar: ${error.message || error}`, true);
+    }
+  }
+
+  function deleteSkill(id){
+    const skill = skills.find(s => s.id === id);
+    if(!skill) return;
+    if(!canManage(skill)){
+      showToast("Solo el autor puede eliminar esta habilidad.", true);
+      return;
+    }
+
+    openConfirm(`¿Eliminar definitivamente "${skill.name}"?`, async () => {
+      try{
+        const { error } = await sb.from(SKILLS_TABLE).delete().eq("id", id);
+        if(error) throw error;
+        if(skill.imagePath) await deleteStoredImage(skill.imagePath);
+        await loadSkills();
+        await renderLibrary();
+        closeConfirm();
+        showToast("Habilidad eliminada.");
+      }catch(error){
+        console.error(error);
+        closeConfirm();
+        showToast(`No se pudo eliminar: ${error.message || error}`, true);
+      }
+    });
+  }
+
+  function duplicateSkill(id){
+    const skill = skills.find(s => s.id === id);
+    if(skill) openEditor(skill, true);
+  }
+
+  function updateImageUI(){
+    const preview = $("imagePreview");
+    if(currentImageUrl){
+      preview.style.backgroundImage = `url("${currentImageUrl}")`;
+      preview.textContent = "";
+    }else{
+      preview.style.backgroundImage = "";
+      preview.textContent = "Sin imagen";
+    }
+
+    $("imageFileName").textContent = getRecommendedFilename();
+    $("downloadImageBtn").disabled = !currentImageUrl;
+    $("removeImageBtn").disabled = !currentImageUrl;
+  }
+
+  function handleImage(file){
+    if(!file) return;
+    if(!file.type.startsWith("image/")){
+      showToast("El archivo seleccionado no es una imagen.", true);
+      return;
+    }
+
+    revokeCurrentImageUrl();
+    currentImageBlob = file;
+    currentImageType = file.type || "image/png";
+    currentImageRemoved = false;
+    currentImageUrl = URL.createObjectURL(file);
+    updateImageUI();
+    showToast(`Imagen adjuntada (${(file.size / 1024 / 1024).toFixed(2)} MB).`);
+  }
+
+  function downloadRenamedImage(){
+    if(!currentImageBlob) return;
+    const url = URL.createObjectURL(currentImageBlob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = getRecommendedFilename();
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function getColorInstruction(){
+    const schoolColor = COLOR_RULES[fields.school.value] || "colores apagados medievales";
+    if(fields.type.value === "Pasiva"){
+      if(fields.school.value === "Sin escuela"){
+        return "La habilidad es pasiva neutra: utiliza escala de grises completa.";
+      }
+      return `La habilidad es pasiva: utiliza una base en escala de grises con pequeños acentos de ${schoolColor}. El color nunca debe dominar.`;
+    }
+    return `La habilidad es activa: utiliza como color predominante ${schoolColor}, manteniendo una saturación baja y medieval.`;
+  }
+
+  function generatePrompt(){
+    const name = fields.name.value.trim() || "[NOMBRE DE LA HABILIDAD]";
+    const cls = fields.className.value;
+    const type = fields.type.value;
+    const school = fields.school.value;
+    const effect = fields.description.value.trim() || "[DESCRIBIR QUÉ HACE]";
+    const design = fields.iconDesign.value.trim() || "[DESCRIBIR EL ELEMENTO VISUAL PRINCIPAL]";
+    const guide = $("promptGuideText").value.trim() || DEFAULT_GUIDE;
+
+    fields.promptText.value =
+`CRIPTA — ICONO DE HABILIDAD
+
+Nombre: ${name}
+Clase: ${cls}
+Tipo: ${type}
+Escuela o tipo de daño: ${school}
+Efecto: ${effect}
+
+Concepto visual:
+${design}
+
+Genera un icono cuadrado de habilidad para CRIPTA, completamente aislado sobre fondo magenta chroma puro #FF00FF. El icono debe consistir en un pergamino cuadrado envejecido, limpio y sencillo, sin marco, sin ribetes, sin remaches y sin adornos exteriores. El pergamino debe ocupar casi toda la imagen y tener una textura suave, con poco ruido y pocas manchas para conservar la definición.
+
+La ilustración debe ser medieval, dibujada a mano con tinta y pintura apagada, inspirada en los iconos clásicos de Ultima Online y coherente con las escenas narrativas de CRIPTA. Debe mostrar un único elemento protagonista o una composición muy simple, con silueta clara, alto contraste y lectura inmediata incluso a 48x48 o 64x64 píxeles.
+
+${getColorInstruction()}
+
+Sin texto, letras, números, logotipos, marcos de interfaz, efectos modernos, colores neón, estilo anime, estilo cartoon ni apariencia 3D. Máxima resolución disponible.
+
+Criterios adicionales de esta colección:
+${guide}`;
+    updateLivePreview();
+  }
+
+  async function copyPrompt(){
+    const text = fields.promptText.value;
+    try{
+      await navigator.clipboard.writeText(text);
+      showToast("Prompt copiado.");
+    }catch{
+      fields.promptText.select();
+      document.execCommand("copy");
+      showToast("Prompt copiado.");
+    }
+  }
+
+  function updateLivePreview(){
+    const duration = fields.duration.value === "Personalizada"
+      ? (fields.customDuration.value || "Personalizada")
+      : fields.duration.value;
+
+    const tags = fields.tags.value.split(",").map(t => t.trim()).filter(Boolean);
+    $("livePreview").innerHTML = `
+      <div class="preview-row"><strong>${escapeHtml(fields.name.value || "Sin nombre")}</strong></div>
+      <div class="preview-row">${escapeHtml(fields.className.value)} · ${escapeHtml(fields.type.value)}</div>
+      <div class="preview-row">${escapeHtml(fields.school.value)} · ${escapeHtml(duration)}</div>
+      <div class="preview-row">${escapeHtml(fields.description.value || "Sin descripción")}</div>
+      <div class="preview-row">${tags.map(t => `<span class="badge">${escapeHtml(t)}</span>`).join("")}</div>
+    `;
+    updateImageUI();
+  }
+
+  function skillToMarkdown(skill){
+    const tags = (skill.tags || []).join(", ") || "—";
+    return `## ${skill.name}
+
+**Clase:** ${skill.className}  
+**Tipo:** ${skill.type}  
+**Escuela o tipo de daño:** ${skill.school}  
+**Duración:** ${skill.duration}  
+**Coste:** ${skill.cost}  
+**Enfriamiento:** ${skill.cooldown}  
+**Archivo de icono:** \`${skill.imageFilename || `${classSlug(skill.className)}_${skill.assetKey}.png`}\`  
+**Etiquetas:** ${tags}
+
+### Qué hace
+
+${skill.description || "Sin descripción."}
+
+### Progresión
+
+| Tier | Efecto | Precio |
+|---|---|---:|
+| I | ${skill.tier1 || "—"} | ${skill.price1 ?? 0} |
+| II | ${skill.tier2 || "—"} | ${skill.price2 ?? 0} |
+| III | ${skill.tier3 || "—"} | ${skill.price3 ?? 0} |
+
+### Diseño del icono
+
+${skill.iconDesign || "Sin definir."}
+
+### Prompt de creación del icono
+
+\`\`\`text
+${skill.promptText || ""}
+\`\`\`
+
+### Notas internas
+
+${skill.notes || "—"}
+
+---`;
+  }
+
+  function exportMarkdown(){
+    if(!skills.length){
+      showToast("No hay habilidades para exportar.", true);
+      return;
+    }
+
+    const sorted = [...skills].sort((a,b) =>
+      (a.className + a.name).localeCompare(b.className + b.name, "es")
+    );
+
+    const header =
+`# CRIPTA — Biblioteca de habilidades
+
+**Total:** ${sorted.length}  
+**Exportado:** ${new Date().toLocaleString("es-ES")}
+
+---`;
+
+    const content = [header, ...sorted.map(skillToMarkdown)].join("\n\n");
+    downloadText("CRIPTA_HABILIDADES.md", content, "text/markdown;charset=utf-8");
+  }
+
+  async function exportBackup(){
+    const payload = {
+      app:"CRIPTA Skill Creator Online",
+      version:1,
+      exportedAt:new Date().toISOString(),
+      promptGuide:$("promptGuideText").value,
+      skills:skills.map(skill => ({...skill, imageUrl: skill.imagePath ? publicImageUrl(skill.imagePath) : ""}))
+    };
+    downloadText(
+      "CRIPTA_HABILIDADES_ONLINE_BACKUP.json",
+      JSON.stringify(payload,null,2),
+      "application/json;charset=utf-8"
+    );
+  }
+
+  function importBackup(file){
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const parsed = JSON.parse(reader.result);
+        const importedSkills = Array.isArray(parsed) ? parsed : parsed.skills;
+        if(!Array.isArray(importedSkills)) throw new Error("Formato no válido");
+
+        openConfirm(
+          `Se crearán ${importedSkills.length} habilidades a tu nombre. Las imágenes externas no se importarán automáticamente.`,
+          async () => {
+            try{
+              let added = 0;
+              for(const original of importedSkills){
+                const newId = uid();
+                const copy = {...original, id:newId};
+                delete copy.ownerId;
+                delete copy.owner_id;
+                delete copy.author;
+                delete copy.imagePath;
+                delete copy.imageUrl;
+                delete copy.createdAt;
+                delete copy.updatedAt;
+                delete copy.imageData;
+                copy.hasImage = false;
+
+                const {id, ...payload} = copy;
+                const { error } = await sb.from(SKILLS_TABLE).insert({
+                  id,
+                  owner_id: currentUser.id,
+                  author: authorName,
+                  payload,
+                  image_path:""
+                });
+                if(error) throw error;
+                added++;
+              }
+              await loadSkills();
+              await renderLibrary();
+              closeConfirm();
+              showToast(`${added} habilidades importadas.`);
+            }catch(error){
+              console.error(error);
+              closeConfirm();
+              showToast(`No se pudo importar: ${error.message || error}`, true);
+            }
+          }
+        );
+      }catch{
+        showToast("El archivo JSON no es válido.", true);
+      }
+      $("restoreInput").value = "";
+    };
+    reader.readAsText(file);
+  }
+
+  function downloadText(filename, content, type){
+    const blob = new Blob([content],{type});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url),1000);
+  }
+
+  function bindEvents(){
+    $("newBtn").addEventListener("click", () => openEditor());
+    $("exportBtn").addEventListener("click", exportMarkdown);
+    $("backupBtn").addEventListener("click", exportBackup);
+    $("restoreInput").addEventListener("change", e => importBackup(e.target.files[0]));
+
+    $("searchInput").addEventListener("input", renderLibrary);
+    $("classFilter").addEventListener("change", renderLibrary);
+    $("typeFilter").addEventListener("change", renderLibrary);
+
+    $("skillGrid").addEventListener("click", e => {
+      const button = e.target.closest("button[data-action]");
+      if(!button) return;
+      const skill = skills.find(s => s.id === button.dataset.id);
+      if(button.dataset.action === "edit" && skill) openEditor(skill);
+      if(button.dataset.action === "duplicate") duplicateSkill(button.dataset.id);
+      if(button.dataset.action === "delete") deleteSkill(button.dataset.id);
+    });
+
+    $("cancelBtn").addEventListener("click", () => showScreen("library"));
+    $("saveBtn").addEventListener("click", saveCurrentSkill);
+    $("duplicateFromEditorBtn").addEventListener("click", () => {
+      const draft = collectSkill();
+      draft.id = uid();
+      draft.name = `${draft.name || "Habilidad"} (copia)`;
+      draft.assetKey = `${draft.assetKey || "skill"}copy`;
+      editingId = null;
+      $("editorTitle").textContent = "Duplicar habilidad";
+      fields.name.value = draft.name;
+      fields.assetKey.value = draft.assetKey;
+      updateLivePreview();
+      showToast("Copia preparada. Pulsa Guardar habilidad.");
+    });
+
+    fields.duration.addEventListener("change", () => {
+      fields.customDuration.disabled = fields.duration.value !== "Personalizada";
+      updateLivePreview();
+    });
+
+    fields.name.addEventListener("input", () => {
+      if(!fields.assetKey.dataset.touched){
+        fields.assetKey.value = suggestAssetKey(fields.name.value);
+      }
+      updateLivePreview();
+    });
+
+    fields.assetKey.addEventListener("input", () => {
+      fields.assetKey.dataset.touched = "true";
+      updateLivePreview();
+    });
+
+    [
+      fields.className,fields.type,fields.school,fields.customDuration,
+      fields.cost,fields.cooldown,fields.tier1,fields.tier2,fields.tier3,
+      fields.description,fields.iconDesign,fields.tags
+    ].forEach(el => {
+      el.addEventListener("input", updateLivePreview);
+      el.addEventListener("change", updateLivePreview);
+    });
+
+    $("imageInput").addEventListener("change", e => handleImage(e.target.files[0]));
+    $("downloadImageBtn").addEventListener("click", downloadRenamedImage);
+    $("removeImageBtn").addEventListener("click", () => {
+      revokeCurrentImageUrl();
+      currentImageBlob = null;
+      currentImageType = "image/png";
+      currentImageRemoved = true;
+      $("imageInput").value = "";
+      updateImageUI();
+      showToast("Imagen retirada. Se eliminará al guardar.");
+    });
+
+    $("generatePromptBtn").addEventListener("click", () => {
+      generatePrompt();
+      showToast("Prompt actualizado.");
+    });
+    $("copyPromptBtn").addEventListener("click", copyPrompt);
+
+    document.querySelectorAll(".tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+        document.querySelectorAll(".tabpane").forEach(p => p.classList.remove("active"));
+        tab.classList.add("active");
+        $(tab.dataset.tab).classList.add("active");
+      });
+    });
+
+    $("promptGuideText").addEventListener("input", () => {
+      localStorage.setItem(GUIDE_KEY, $("promptGuideText").value);
+    });
+
+    $("resetGuideBtn").addEventListener("click", () => {
+      $("promptGuideText").value = DEFAULT_GUIDE;
+      localStorage.setItem(GUIDE_KEY, DEFAULT_GUIDE);
+      showToast("Guía base restaurada.");
+    });
+
+    $("confirmCancel").addEventListener("click", closeConfirm);
+    $("confirmAccept").addEventListener("click", () => {
+      if(confirmAction) confirmAction();
+    });
+    $("confirmDialog").addEventListener("click", e => {
+      if(e.target === $("confirmDialog")) closeConfirm();
+    });
+
+    window.addEventListener("keydown", e => {
+      if(e.key === "Escape"){
+        if($("confirmDialog").classList.contains("open")) closeConfirm();
+        else if(editorScreen.classList.contains("active")) showScreen("library");
+      }
+      if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s" && editorScreen.classList.contains("active")){
+        e.preventDefault();
+        saveCurrentSkill();
+      }
+    });
+  }
+
+  function seedExampleIfEmpty(){
+    if(skills.length) return;
+    skills = [{
+      id:uid(),
+      name:"Precisión carnicera",
+      className:"Guerrero",
+      type:"Pasiva",
+      school:"Físico",
+      duration:"Permanente",
+      cost:"No aplica",
+      cooldown:"No aplica",
+      tier1:"+5% de probabilidad crítica",
+      tier2:"+10% de probabilidad crítica",
+      tier3:"+15% de probabilidad crítica",
+      price1:500,
+      price2:750,
+      price3:1000,
+      description:"Aumenta la probabilidad de golpe crítico un 5% por tier.",
+      iconDesign:"Una espada atraviesa el centro de una diana circular, con una pequeña salpicadura de sangre en el punto de impacto. Base gris con acentos rojo oscuro.",
+      assetKey:"butcherprecision",
+      tags:["crítico","físico","arma"],
+      notes:"Ejemplo inicial. Icono aprobado sin ribetes y con pergamino limpio.",
+      promptText:"",
+      hasImage:false,
+      imageType:"image/png",
+      imageFilename:"warrior_butcherprecision.png",
+      updatedAt:new Date().toISOString()
+    }];
+    saveSkills();
+  }
+
+  async function init(){
+    fillSelects();
+    $("promptGuideText").value = localStorage.getItem(GUIDE_KEY) || DEFAULT_GUIDE;
+    bindEvents();
+    showScreen("library");
+
+    try{
+      await ensureAnonymousSession();
+
+      if(!authorName){
+        authorName = (prompt("Escribe tu nombre para firmar las habilidades:") || "").trim();
+        if(!authorName) authorName = "Autor sin nombre";
+        localStorage.setItem(AUTHOR_KEY, authorName);
+      }
+
+      $("onlineAuthor").textContent = `${authorName}${isAdmin ? " (administrador)" : ""}`;
+      $("onlineUserId").textContent = currentUser.id;
+
+      $("changeAuthorBtn").addEventListener("click", async () => {
+        const next = (prompt("Nuevo nombre visible:", authorName) || "").trim();
+        if(!next) return;
+        authorName = next;
+        localStorage.setItem(AUTHOR_KEY, authorName);
+        $("onlineAuthor").textContent = `${authorName}${isAdmin ? " (administrador)" : ""}`;
+        await renderLibrary();
+      });
+
+      await loadSkills();
+      await renderLibrary();
+    }catch(error){
+      console.error(error);
+      $("stats").textContent = "Error de conexión";
+      showToast(`No se pudo conectar con Supabase: ${error.message || error}`, true);
+    }
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>
