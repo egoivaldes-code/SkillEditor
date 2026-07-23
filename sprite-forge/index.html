@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#151313">
+  <meta name="description" content="Editor colaborativo y generador de sprites de CRIPTA">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="./styles.css">
+  <title>CRIPTA Sprite Forge</title>
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="topbar">
+      <button id="backBtn" class="icon-btn hidden" aria-label="Volver">←</button>
+      <div class="brand-wrap">
+        <div class="brand-mark">C</div>
+        <div>
+          <h1 id="pageTitle">Sprite Forge</h1>
+          <p id="pageSubtitle">Conectando…</p>
+        </div>
+      </div>
+      <button id="settingsBtn" class="icon-btn" aria-label="Ajustes">⚙</button>
+    </header>
+
+    <main id="main" class="main"></main>
+
+    <nav id="editorNav" class="bottom-nav hidden" aria-label="Pasos del proyecto">
+      <button data-step="base" class="nav-item active"><span>1</span>Base</button>
+      <button data-step="config" class="nav-item"><span>2</span>Config</button>
+      <button data-step="frames" class="nav-item"><span>3</span>Frames</button>
+      <button data-step="export" class="nav-item"><span>4</span>Exportar</button>
+    </nav>
+  </div>
+
+  <input id="referenceInput" type="file" accept="image/*" multiple hidden>
+  <input id="frameInput" type="file" accept="image/*" hidden>
+
+  <dialog id="settingsDialog" class="dialog">
+    <form method="dialog" class="dialog-card">
+      <div class="dialog-head">
+        <h2>Cuenta y ajustes</h2>
+        <button value="cancel" class="icon-btn" aria-label="Cerrar">✕</button>
+      </div>
+      <label class="field">
+        <span>Tu nombre visible</span>
+        <input id="authorNameInput" maxlength="40" placeholder="Ej.: Egoi">
+      </label>
+      <div class="card compact-card">
+        <div class="info-row"><span>Conexión</span><strong id="connectionStatusText">—</strong></div>
+        <div class="info-row"><span>ID de este dispositivo</span><code id="deviceUserIdText">—</code></div>
+        <div class="info-row"><span>Permisos</span><strong id="roleStatusText">—</strong></div>
+      </div>
+      <label class="check-row">
+        <input id="demoModeInput" type="checkbox">
+        <span><strong>Modo demostración</strong><small>Genera muñecos provisionales sin gastar la cuota de IA.</small></span>
+      </label>
+      <p class="muted small">La clave privada de Cloudflare nunca se guarda en el navegador. La generación pasa por una función protegida de Supabase.</p>
+      <button id="saveSettingsBtn" value="default" class="primary-btn full">Guardar</button>
+    </form>
+  </dialog>
+
+  <dialog id="confirmDialog" class="dialog">
+    <form method="dialog" class="dialog-card compact">
+      <h2 id="confirmTitle">Confirmar</h2>
+      <p id="confirmText" class="muted"></p>
+      <div class="dialog-actions">
+        <button value="cancel" class="secondary-btn">Cancelar</button>
+        <button id="confirmOkBtn" value="default" class="danger-btn">Eliminar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./config.js"></script>
+  <script src="./js/app-core.js"></script>
+  <script src="./js/app-cloud.js"></script>
+  <script src="./js/app-ui.js"></script>
+  <script src="./js/app-frames.js"></script>
+  <script src="./js/app-utils.js"></script>
+</body>
+</html>
