@@ -80,10 +80,6 @@ function buildSpritesheetPrompt(project, anim, variant) {
 
 // ── Llamada a la Edge Function (mode: spritesheet) ─────────────────────────
 async function generateSpritesheetVariant(project, anim, variant, { referenceUrls, masterUrl }) {
-  const session = await sb.auth.getSession();
-  const token = session?.data?.session?.access_token;
-  if (!token) throw new Error('Sin token de sesión');
-
   const prompt = buildSpritesheetPrompt(project, anim, variant);
 
   const payload = {
@@ -101,15 +97,13 @@ async function generateSpritesheetVariant(project, anim, variant, { referenceUrl
     referenceUrls: masterUrl ? [masterUrl, ...referenceUrls.filter(u => u !== masterUrl)].slice(0, 4) : referenceUrls.slice(0, 4)
   };
 
-  const fnUrl = `${CONFIG.supabaseUrl}/functions/v1/${CONFIG.generationFunction}`;
-  const response = await fetch(fnUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify(payload)
-  });
-  const data = await response.json();
-  if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
-  if (!data.imageBase64) throw new Error('La función no devolvió imagen');
+  // Usar sb.functions.invoke en lugar de fetch() directo para que el cliente
+  // añada automáticamente el header "apikey" requerido por el API gateway de Supabase.
+  // Sin ese header, Supabase rechaza la petición antes de llegar a la función y
+  // la respuesta de rechazo no lleva CORS headers → Chrome lanza "Failed to fetch".
+  const { data, error } = await sb.functions.invoke(CONFIG.generationFunction, { body: payload });
+  if (error) throw error;
+  if (!data?.imageBase64) throw new Error(data?.error || 'La función no devolvió imagen');
 
   // Convertir base64 a Blob
   const bin = atob(data.imageBase64);
@@ -230,9 +224,6 @@ async function generateMasterReference() {
     return toast(`Error al preparar: ${err.message}`);
   }
 
-  const session = await sb.auth.getSession();
-  const token = session?.data?.session?.access_token;
-
   const prompt = [
     'Pixel art de referencia. Un único personaje de RPG mirando al Este (derecha).',
     'Vista top-down 3/4, cuerpo completo, centrado, misma escala que los sprites.',
@@ -250,14 +241,9 @@ async function generateMasterReference() {
   };
 
   try {
-    const fnUrl = `${CONFIG.supabaseUrl}/functions/v1/${CONFIG.generationFunction}`;
-    const response = await fetch(fnUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(payload)
-    });
-    const data = await response.json();
-    if (!response.ok || !data.imageBase64) throw new Error(data.error || 'Sin imagen');
+    const { data, error: fnError } = await sb.functions.invoke(CONFIG.generationFunction, { body: payload });
+    if (fnError) throw fnError;
+    if (!data?.imageBase64) throw new Error(data?.error || 'Sin imagen');
 
     const bin = atob(data.imageBase64);
     const arr = new Uint8Array(bin.length);
