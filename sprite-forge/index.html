@@ -27,15 +27,16 @@
     <main id="main" class="main"></main>
 
     <nav id="editorNav" class="bottom-nav hidden" aria-label="Pasos del proyecto">
-      <button data-step="base" class="nav-item active"><span>1</span>Base</button>
-      <button data-step="config" class="nav-item"><span>2</span>Config</button>
-      <button data-step="frames" class="nav-item"><span>3</span>Frames</button>
-      <button data-step="export" class="nav-item"><span>4</span>Exportar</button>
+      <button data-step="base"     class="nav-item active"><span>1</span>Referencia</button>
+      <button data-step="generate" class="nav-item"><span>2</span>Generar</button>
+      <button data-step="cutter"   class="nav-item"><span>3</span>Editor</button>
+      <button data-step="export"   class="nav-item"><span>4</span>Exportar</button>
     </nav>
   </div>
 
   <input id="referenceInput" type="file" accept="image/*" multiple hidden>
   <input id="frameInput" type="file" accept="image/*" hidden>
+  <input id="sheetInput" type="file" accept="image/png,image/jpeg,image/webp" hidden>
 
   <dialog id="settingsDialog" class="dialog">
     <form method="dialog" class="dialog-card">
@@ -78,6 +79,8 @@
   <script src="./js/app-cloud.js"></script>
   <script src="./js/app-ui.js"></script>
   <script src="./js/app-frames.js"></script>
+  <script src="./js/app-cutter.js"></script>
+  <script src="./js/app-sheets.js"></script>
   <script src="./js/app-utils.js"></script>
 </body>
 </html>

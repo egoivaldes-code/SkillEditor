@@ -76,12 +76,6 @@ function normalizeBase64(value: string) {
 /**
  * Convert a Supabase Storage public object URL to its image-transform equivalent
  * so the server fetches a ≤480×480 version instead of the full-size file.
- *
- * /storage/v1/object/public/<bucket>/<path>
- *   → /storage/v1/render/image/public/<bucket>/<path>?width=480&height=480&resize=contain
- *
- * If the pathname doesn't match the expected pattern the original URL is returned
- * unchanged so the caller can still fetch something.
  */
 function toResizedUrl(storageUrl: string): string {
   try {
@@ -90,7 +84,7 @@ function toResizedUrl(storageUrl: string): string {
       '/storage/v1/object/public/',
       '/storage/v1/render/image/public/',
     )
-    if (transformed === url.pathname) return storageUrl // no match — leave as-is
+    if (transformed === url.pathname) return storageUrl
     url.pathname = transformed
     url.searchParams.set('width', '480')
     url.searchParams.set('height', '480')
@@ -104,14 +98,6 @@ function toResizedUrl(storageUrl: string): string {
 /**
  * Walk every plausible location in a Cloudflare Workers AI JSON response and
  * return the first non-empty base64 string found, or '' if none.
- *
- * Known response shapes observed in the wild:
- *   { result: { image: "<base64>" } }           ← documented FLUX shape
- *   { result: { data: { image: "<base64>" } } }  ← some models
- *   { image: "<base64>" }                         ← flat (undocumented)
- *   { data: { image: "<base64>" } }               ← flat alternate
- *   { result: "<base64>" }                        ← raw result string
- *   "<base64>"                                    ← bare string body
  */
 function extractBase64FromJson(payload: unknown): string {
   if (typeof payload === 'string' && payload.length > 1000) {
@@ -180,12 +166,22 @@ Deno.serve(async (req) => {
 
   try {
     const body = await req.json()
+
+    // ── Mode routing ────────────────────────────────────────────────────────
+    // mode: "spritesheet" — generate a full horizontal spritesheet (wide image)
+    // mode: "reference"  — generate a single reference image (character facing East)
+    // mode: (default)    — frame-by-frame generation (legacy / experimental)
+    const mode = String(body?.mode || 'frame').toLowerCase()
+
     const prompt = String(body?.prompt || '').trim().slice(0, 8000)
     if (!prompt) return json({ error: 'Falta el prompt' }, 400)
 
-    const width = clampInt(body?.width, 256, 1920, 512)
+    // For spritesheet mode, the caller sends width = frame_size * frame_count
+    // We cap individual dimension to keep memory within model limits
+    const maxDim = mode === 'spritesheet' ? 4096 : 1920
+    const width = clampInt(body?.width, 256, maxDim, mode === 'spritesheet' ? 3072 : 512)
     const height = clampInt(body?.height, 256, 1920, 512)
-    const guidance = clampFloat(body?.guidance, 1, 10, 4)
+    const guidance = clampFloat(body?.guidance, 1, 10, mode === 'reference' ? 6 : 4)
     const seed = body?.seed == null || body?.seed === ''
       ? Math.floor(Math.random() * 2_147_483_647)
       : clampInt(body.seed, 0, 2_147_483_647, 1)
@@ -227,12 +223,16 @@ Deno.serve(async (req) => {
     form.append('guidance', String(guidance))
     form.append('seed', String(seed))
 
+    console.log(JSON.stringify({
+      stage: 'request_info',
+      mode,
+      width,
+      height,
+      referenceCount: referenceUrls.length,
+      estimatedNeurons,
+    }))
+
     for (let index = 0; index < referenceUrls.length; index++) {
-      // Always fetch through the Supabase Storage image-transform endpoint so
-      // Cloudflare receives a ≤480×480 image regardless of the original size.
-      // We intentionally do NOT fall back to the raw object URL: if the transform
-      // endpoint is unavailable we must fail loudly rather than silently forward a
-      // full-size (512–1024 px) image that may exceed model or policy limits.
       const resizedUrl = toResizedUrl(referenceUrls[index])
       const response = await fetch(resizedUrl, { signal: AbortSignal.timeout(15_000) })
       if (!response.ok) {
@@ -259,6 +259,7 @@ Deno.serve(async (req) => {
     console.log(JSON.stringify({
       stage: 'before_cloudflare',
       model,
+      mode,
       width,
       height,
       referenceCount: referenceUrls.length,
@@ -294,11 +295,9 @@ Deno.serve(async (req) => {
     let mimeType = 'image/png'
 
     if (contentType.startsWith('image/')) {
-      // Binary image response (most common for image models)
       mimeType = contentType.split(';')[0].trim()
       imageBase64 = base64FromArrayBuffer(await cfResponse.arrayBuffer())
     } else {
-      // JSON response — walk every known shape
       const payload = await cfResponse.json()
 
       console.log(JSON.stringify({
@@ -313,7 +312,6 @@ Deno.serve(async (req) => {
       imageBase64 = extractBase64FromJson(payload)
 
       if (!imageBase64) {
-        // Return 502 with diagnosis — never return 200 without an image
         return json({
           error: 'Cloudflare respondió sin una imagen reconocible',
           cloudflareStatus: cfResponse.status,
@@ -330,6 +328,7 @@ Deno.serve(async (req) => {
     // ── Diagnostic log before returning to frontend ───────────────────────────
     console.log(JSON.stringify({
       stage: 'return_image',
+      mode,
       mimeType,
       imageLength: imageBase64?.length || 0,
       seed,
@@ -339,6 +338,7 @@ Deno.serve(async (req) => {
       imageBase64,
       mimeType,
       seed,
+      mode,
       estimatedNeurons,
       remainingEstimatedNeurons: budget?.remaining ?? null,
     })

@@ -211,9 +211,13 @@ function serializeProject(project) {
     if (!asset) return;
     delete asset.blob;
     delete asset.imageUrl;
+    delete asset._blob;
   };
   (clone.references || []).forEach(cleanAsset);
-  for (const anim of clone.animations || []) for (const dir of anim.directions || []) for (const frame of dir.frames || []) cleanAsset(frame);
+  for (const anim of clone.animations || []) {
+    for (const dir of anim.directions || []) for (const frame of dir.frames || []) cleanAsset(frame);
+    for (const variant of anim.variants || []) cleanAsset(variant);
+  }
   return clone;
 }
 
@@ -238,20 +242,27 @@ async function persistProjectAssets(project) {
     for (const dir of anim.directions || []) {
       for (const frame of dir.frames || []) if (frame.blob && !frame.imagePath) jobs.push(uploadAsset(project, frame, `frames/${anim.id}/${dir.id}`));
     }
+    // Upload pending variant sheets
+    for (const variant of anim.variants || []) {
+      if (variant._blob && !variant.imagePath) jobs.push(uploadAsset(project, variant, `sheets/${anim.id}`, variant._blob));
+    }
   }
   for (const job of jobs) await job;
 }
 
-async function uploadAsset(project, asset, folder) {
-  const ext = mimeExtension(asset.blob?.type || 'image/png');
+async function uploadAsset(project, asset, folder, overrideBlob) {
+  const blob = overrideBlob || asset.blob;
+  const ext = mimeExtension(blob?.type || 'image/png');
   const path = `${project.ownerId}/${project.id}/${folder}/${asset.id}.${ext}`;
-  const { error } = await sb.storage.from(CONFIG.assetsBucket).upload(path, asset.blob, {
-    contentType: asset.blob.type || 'image/png', upsert: true, cacheControl: '3600'
+  const { error } = await sb.storage.from(CONFIG.assetsBucket).upload(path, blob, {
+    contentType: blob.type || 'image/png', upsert: true, cacheControl: '3600'
   });
   if (error) throw error;
   asset.imagePath = path;
+  if (overrideBlob) delete asset._blob;
   return path;
 }
+
 
 async function removeAsset(asset) {
   if (!asset?.imagePath || !state.online) return;
@@ -268,7 +279,10 @@ function publicAssetUrl(path) {
 function collectAssetPaths(project) {
   const paths = [];
   for (const ref of project.references || []) if (ref.imagePath) paths.push(ref.imagePath);
-  for (const anim of project.animations || []) for (const dir of anim.directions || []) for (const frame of dir.frames || []) if (frame.imagePath) paths.push(frame.imagePath);
+  for (const anim of project.animations || []) {
+    for (const dir of anim.directions || []) for (const frame of dir.frames || []) if (frame.imagePath) paths.push(frame.imagePath);
+    for (const v of anim.variants || []) if (v.imagePath) paths.push(v.imagePath);
+  }
   return [...new Set(paths)];
 }
 
@@ -349,6 +363,7 @@ function createAnimation(type = 'Walk', directionCount = 2, frameCount = 6, mirr
     width: 512,
     height: 512,
     background: '#FF00FF',
+    variants: [],
     directions: directionDefs.map(def => {
       const directionSeed = randomSeed();
       return {
@@ -423,6 +438,7 @@ function normalizeAnimation(anim) {
   if (!anim) return;
   if (typeof anim.mirror !== 'boolean') anim.mirror = false;
   if (typeof anim.baseSeed !== 'number') anim.baseSeed = randomSeed();
+  if (!Array.isArray(anim.variants)) anim.variants = [];
   if (!Array.isArray(anim.directions)) anim.directions = [];
   anim.directions.forEach((dir, di) => {
     dir.key = dir.key || directionKeyFromName(dir.name);

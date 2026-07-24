@@ -123,7 +123,7 @@ function bindValue(id, setter) {
   }
 
   function stepLabel(step) {
-    return ({ base:'Base y referencias', config:'Configuración', frames:'Frames', export:'Exportar' })[step] || '';
+    return ({ base:'Referencia', generate:'Generar', cutter:'Editor Cutter', frames:'Timeline', export:'Exportar' })[step] || '';
   }
 
   function uid() {
