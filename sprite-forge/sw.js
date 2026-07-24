@@ -1,6 +1,6 @@
 // Service Worker for CRIPTA Sprite Forge
 // Scope: /SkillEditor/sprite-forge/ when served from GitHub Pages
-const CACHE = 'cripta-sprite-forge-v6';
+const CACHE = 'cripta-sprite-forge-v7';
 const SHELL = [
   './',
   './index.html',

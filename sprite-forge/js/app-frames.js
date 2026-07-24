@@ -283,13 +283,22 @@ function renderFramesStep() {
           throw Object.assign(new Error(translated), { fatal: true });
         }
 
-        if (!data?.imageBase64) {
-          const msg = data?.error || 'La función no devolvió una imagen';
+        // Accept imageBase64 from every known location in the response
+        const imageBase64 =
+          data?.imageBase64 ||
+          data?.image ||
+          data?.result?.image ||
+          data?.data?.image ||
+          '';
+
+        if (typeof imageBase64 !== 'string' || imageBase64.length < 1000) {
+          const msg = data?.error ||
+            `Respuesta inválida de generate-sprite. Campos: ${Object.keys(data || {}).join(', ')}`;
           const isQuota = msg.toLowerCase().includes('cuota') || msg.toLowerCase().includes('limit') || msg.toLowerCase().includes('neuron');
           throw Object.assign(new Error(translateGenerationError(msg, null)), { fatal: isQuota });
         }
 
-        frame.blob = base64ToBlob(data.imageBase64, data.mimeType || 'image/png');
+        frame.blob = base64ToBlob(imageBase64, data.mimeType || 'image/png');
         if (data.seed != null) frame.seed = data.seed;
         if (data.remainingEstimatedNeurons != null) {
           toast(`Generado · cuota estimada restante: ${data.remainingEstimatedNeurons}`);
