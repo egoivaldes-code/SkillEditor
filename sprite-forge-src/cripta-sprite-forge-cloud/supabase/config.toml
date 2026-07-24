@@ -1,0 +1,4 @@
+project_id = "tyilsfxqctrgozlchwxc"
+
+[functions.generate-sprite]
+verify_jwt = true
