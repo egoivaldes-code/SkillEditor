@@ -2,3 +2,7 @@ modules = ["nodejs-24"]
 [[ports]]
 localPort = 8080
 externalPort = 80
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 30000
