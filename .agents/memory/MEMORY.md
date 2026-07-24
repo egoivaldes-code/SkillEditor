@@ -1,0 +1,2 @@
+- [Sprite Forge GitHub deploy](sprite-forge-deploy.md) — PR #1 en egoivaldes-code/SkillEditor, rama feature/sprite-forge-cloud; post-merge requiere SQL + Edge Function + secretos Cloudflare.
+- [Habilidades Netlify blocked](habilidades-netlify.md) — deploy listo pero bloqueado por créditos agotados en cuenta aspirin; TEAM_PASSWORD ya configurado en Netlify.

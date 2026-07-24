@@ -21,8 +21,8 @@ function renderHome() {
         </div>
         ${state.setupError ? `<div class="setup-note"><strong>Falta terminar Supabase.</strong><br>${escapeHtml(state.setupError)}<br><small>La app continúa en modo local. Ejecuta la migración incluida y despliega la función <code>generate-sprite</code>.</small></div>` : ''}
         <div class="hero-card">
-          <h2>Sprites compartidos con la familia</h2>
-          <p>Cada dispositivo tiene su autor. Todos ven la biblioteca; el autor y los administradores pueden editar o eliminar.</p>
+          <h2>CRIPTA Sprite Forge</h2>
+          <p>Genera spritesheets completas · Edítalas en el Cutter · Ensambla la animación final.</p>
           <button id="newProjectBtn" class="primary-btn">＋ Nuevo proyecto</button>
         </div>
         <div class="section-head">
@@ -56,7 +56,7 @@ function renderHome() {
     const thumbSrc = assetSrc(thumbAsset) || (project.thumbnailPath ? publicAssetUrl(project.thumbnailPath) : '');
     const thumb = thumbSrc ? `<img src="${escapeAttr(thumbSrc)}" alt="">` : 'Sin imagen';
     const anim = project.animations?.find(a => a.id === project.activeAnimationId) || project.animations?.[0];
-    const frameTotal = anim ? anim.directions.reduce((n,d) => n + d.frames.length, 0) : 0;
+    const variantCount = anim ? (anim.variants?.length || 0) : 0;
     const manageable = canManageProject(project);
     return `
       <article class="project-card ${manageable ? '' : 'readonly'}">
@@ -65,8 +65,7 @@ function renderHome() {
           <h3>${escapeHtml(project.name)}</h3>
           <div class="meta-row">
             <span class="chip">${escapeHtml(anim?.type || 'Sin animación')}</span>
-            <span class="chip">${directionChipText(anim)}</span>
-            <span class="chip">${frameTotal} huecos</span>
+            <span class="chip">${variantCount} variante${variantCount !== 1 ? 's' : ''}</span>
             ${state.isAdmin && project.ownerId !== state.currentUser?.id ? '<span class="chip badge-admin">ADMIN</span>' : ''}
           </div>
           <div class="author-line">Por ${escapeHtml(project.author || 'Sin nombre')}${manageable ? ' · editable' : ' · solo lectura'}</div>
@@ -85,6 +84,8 @@ function renderHome() {
     normalizeProject(project);
     state.currentProject = project;
     state.currentStep = 'base';
+    state.sheetProgress = { active: false };
+    state.pendingCutterVariant = null;
     const anim = getActiveAnimation();
     state.selectedDirection = anim?.directions?.[0]?.id || null;
     renderEditor();
@@ -125,6 +126,8 @@ function renderHome() {
           targetFrames[f].imagePath = '';
         }
       }
+      // Note: variants in clone start empty (don't deep-copy sheet images)
+      clone.animations[a].variants = [];
     }
   }
 
@@ -147,7 +150,7 @@ function renderHome() {
     const project = state.projects.find(p => p.id === id);
     if (!canManageProject(project)) return toast('No puedes eliminar este proyecto');
     els.confirmTitle.textContent = 'Eliminar proyecto';
-    els.confirmText.textContent = `Se eliminará “${project?.name || ''}” y todas sus imágenes compartidas.`;
+    els.confirmText.textContent = `Se eliminará "${project?.name || ''}" y todas sus imágenes compartidas.`;
     els.confirmOkBtn.onclick = async () => {
       try {
         await deleteProjectDb(id);
@@ -166,25 +169,36 @@ function renderHome() {
     const p = state.currentProject;
     if (!p) return renderHome();
     els.pageTitle.textContent = p.name;
-    const saveLabel = state.online ? ({ pending: 'cambios pendientes', saving: 'guardando…', saved: 'guardado', error: 'error al guardar' }[state.saveStatus] || 'nube') : 'local';
+    const saveLabel = state.online
+      ? ({ pending: 'guardando cambios', saving: 'guardando…', saved: 'guardado', error: 'error al guardar' }[state.saveStatus] || 'nube')
+      : 'local';
     els.pageSubtitle.textContent = `${stepLabel(state.currentStep)} · ${saveLabel}`;
     els.backBtn.classList.remove('hidden');
     els.editorNav.classList.remove('hidden');
     els.editorNav.querySelectorAll('[data-step]').forEach(btn => btn.classList.toggle('active', btn.dataset.step === state.currentStep));
 
     if (state.currentStep === 'base') renderBaseStep();
-    if (state.currentStep === 'config') renderConfigStep();
-    if (state.currentStep === 'frames') renderFramesStep();
-    if (state.currentStep === 'export') renderExportStep();
+    else if (state.currentStep === 'generate') renderGenerateStep();
+    else if (state.currentStep === 'cutter') renderCutterStep();
+    else if (state.currentStep === 'frames') renderFramesStep();
+    else if (state.currentStep === 'export') renderExportStep();
+    else renderBaseStep();
   }
 
   function renderBaseStep() {
     const p = state.currentProject;
-    const refs = p.references.map(ref => `
+    const refs = p.references.map(ref => {
+      const isMaster = ref.id === p.masterReferenceId;
+      return `
       <div class="ref-card">
         <img src="${escapeAttr(assetSrc(ref))}" alt="${escapeHtml(ref.name || 'Referencia')}">
-        <button class="remove-ref" data-remove-ref="${ref.id}">✕</button>
-      </div>`).join('');
+        <div class="ref-card-actions">
+          <button class="mini-btn" data-set-master="${ref.id}" title="${isMaster ? 'Quitar referencia maestra' : 'Marcar como referencia maestra'}" style="${isMaster ? 'color:var(--accent);border-color:var(--accent)' : ''}">★</button>
+          <button class="remove-ref mini-btn" data-remove-ref="${ref.id}" title="Eliminar">✕</button>
+        </div>
+        ${isMaster ? '<div class="ref-master-label">Referencia maestra</div>' : ''}
+      </div>`;
+    }).join('');
 
     els.main.innerHTML = `
       <section class="section">
@@ -197,7 +211,8 @@ function renderHome() {
           </label>
         </div>
         <div class="card">
-          <h3>Imágenes de referencia</h3>
+          <div class="section-head"><h3 style="margin:0">Imágenes de referencia</h3></div>
+          <p class="muted small" style="margin:6px 0 10px">La IA usará estas referencias para mantener la identidad, ropa, colores y proporciones del personaje en cada spritesheet generada.</p>
           <div class="ref-grid">
             ${refs}
             ${p.references.length < 4 ? '<button id="addReferenceBtn" class="ref-add">＋<br>Añadir referencia</button>' : ''}
@@ -206,10 +221,10 @@ function renderHome() {
         <div class="card">
           <label class="field"><span>Prompt base</span><textarea id="basePrompt">${escapeHtml(p.basePrompt)}</textarea></label>
           <details style="margin-top:12px"><summary class="muted">Prompt negativo</summary>
-            <label class="field"><textarea id="negativePrompt">${escapeHtml(p.negativePrompt || '')}</textarea></label>
+            <label class="field" style="margin-top:8px"><textarea id="negativePrompt">${escapeHtml(p.negativePrompt || '')}</textarea></label>
           </details>
         </div>
-        <button id="nextBaseBtn" class="primary-btn full">Continuar a configuración</button>
+        <button id="nextBaseBtn" class="primary-btn full">Continuar a generación →</button>
       </section>`;
 
     bindValue('projectName', value => { p.name = value || 'Sin nombre'; els.pageTitle.textContent = p.name; });
@@ -217,88 +232,26 @@ function renderHome() {
     bindValue('basePrompt', value => p.basePrompt = value);
     bindValue('negativePrompt', value => p.negativePrompt = value);
     document.getElementById('addReferenceBtn')?.addEventListener('click', () => els.referenceInput.click());
-    els.main.querySelectorAll('[data-remove-ref]').forEach(btn => btn.addEventListener('click', async () => {
-      const ref = p.references.find(r => r.id === btn.dataset.removeRef);
-      await removeAsset(ref);
-      p.references = p.references.filter(r => r.id !== btn.dataset.removeRef);
+    els.main.querySelectorAll('[data-set-master]').forEach(btn => btn.addEventListener('click', () => {
+      const id = btn.dataset.setMaster;
+      p.masterReferenceId = p.masterReferenceId === id ? '' : id;
       scheduleSave(); renderEditor();
     }));
-    document.getElementById('nextBaseBtn').addEventListener('click', () => { state.currentStep = 'config'; renderEditor(); });
+    els.main.querySelectorAll('[data-remove-ref]').forEach(btn => btn.addEventListener('click', async () => {
+      const id = btn.dataset.removeRef;
+      const ref = p.references.find(r => r.id === id);
+      await removeAsset(ref);
+      p.references = p.references.filter(r => r.id !== id);
+      if (p.masterReferenceId === id) p.masterReferenceId = '';
+      scheduleSave(); renderEditor();
+    }));
+    document.getElementById('nextBaseBtn').addEventListener('click', () => { state.currentStep = 'generate'; renderEditor(); });
   }
 
   function renderConfigStep() {
-    const p = state.currentProject;
-    const anim = getActiveAnimation();
-    const generatedDirectionCount = getDirectionDefs(anim.directionCount, !!anim.mirror).length;
-    els.main.innerHTML = `
-      <section class="section">
-        <div class="card">
-          <div class="section-head"><h3 style="margin:0">Animaciones</h3><button id="addAnimationBtn" class="mini-btn">＋</button></div>
-          <div class="segmented" style="margin-top:12px">
-            ${p.animations.map(a => `<button class="${a.id===anim.id?'active':''}" data-select-animation="${a.id}">${escapeHtml(a.name)}</button>`).join('')}
-          </div>
-        </div>
-        <div class="card">
-          <label class="field"><span>Nombre</span><input id="animationName" value="${escapeAttr(anim.name)}"></label>
-          <label class="field"><span>Tipo de animación</span>
-            <select id="animationType">
-              ${['Idle','Walk','Attack','Cast','Hurt','Death','Activate','Custom'].map(v => `<option ${anim.type===v?'selected':''}>${v}</option>`).join('')}
-            </select>
-          </label>
-          <div class="field" style="margin-top:12px"><span>Direcciones</span>
-            <div class="segmented" id="directionCountSeg">
-              ${[2,4,8].map(n => `<button data-dir-count="${n}" class="${anim.directionCount===n?'active':''}">${n}</button>`).join('')}
-            </div>
-          </div>
-          <label class="field" style="margin-top:12px"><span>Espejo horizontal</span>
-            <div style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:12px;background:#141313;">
-              <input id="mirrorMode" type="checkbox" ${anim.mirror ? 'checked' : ''} style="width:20px;height:20px;accent-color: var(--accent);margin-top:2px;">
-              <div>
-                <div style="font-weight:700">Activar espejo</div>
-                <div class="muted small" id="mirrorHint">${anim.mirror ? `Se generarán ${generatedDirectionCount} direcciones base. ${mirrorSummary(anim.directionCount)}` : 'Desactivado: se generarán todas las direcciones completas.'}</div>
-              </div>
-            </div>
-          </label>
-          <div class="field-grid" style="margin-top:12px">
-            <label class="field"><span>Frames iniciales por dirección</span><input id="initialFrameCount" type="number" min="1" max="24" value="${anim.initialFrameCount}"></label>
-            <label class="field"><span>Tamaño de frame</span>
-              <select id="frameSize"><option value="256" ${anim.width===256?'selected':''}>256 × 256</option><option value="512" ${anim.width===512?'selected':''}>512 × 512</option><option value="1024" ${anim.width===1024?'selected':''}>1024 × 1024</option></select>
-            </label>
-          </div>
-          <p class="muted small">El número inicial solo crea los huecos. Después puedes añadir, duplicar, borrar y reordenar libremente cada dirección.</p>
-        </div>
-        <div class="inline-actions">
-          <button id="deleteAnimationBtn" class="danger-btn">Eliminar animación</button>
-          <button id="goFramesBtn" class="primary-btn">Ir a frames</button>
-        </div>
-      </section>`;
-
-    bindValue('animationName', value => { anim.name = value || anim.type; });
-    bindValue('animationType', value => { anim.type = value; if (!anim.name || anim.name === 'Custom') anim.name = value; });
-    bindValue('initialFrameCount', value => { anim.initialFrameCount = clampInt(value, 1, 24, 6); });
-    bindValue('frameSize', value => { anim.width = anim.height = Number(value); });
-
-    els.main.querySelectorAll('[data-select-animation]').forEach(btn => btn.addEventListener('click', () => {
-      p.activeAnimationId = btn.dataset.selectAnimation;
-      state.selectedDirection = getActiveAnimation().directions[0]?.id;
-      scheduleSave(); renderEditor();
-    }));
-
-    document.getElementById('addAnimationBtn').addEventListener('click', () => {
-      const a = createAnimation('Idle', 2, 6);
-      p.animations.push(a); p.activeAnimationId = a.id; state.selectedDirection = a.directions[0].id;
-      scheduleSave(); renderEditor();
-    });
-
-    document.getElementById('mirrorMode').addEventListener('change', (event) => {
-      anim.mirror = !!event.target.checked;
-      syncAnimationDirections(anim);
-      scheduleSave(); renderEditor();
-    });
-
-    els.main.querySelectorAll('[data-dir-count]').forEach(btn => btn.addEventListener('click', () => changeDirectionCount(Number(btn.dataset.dirCount))));
-    document.getElementById('deleteAnimationBtn').addEventListener('click', () => deleteActiveAnimation());
-    document.getElementById('goFramesBtn').addEventListener('click', () => { state.currentStep = 'frames'; renderEditor(); });
+    // Keep for backward compatibility — redirect to generate
+    state.currentStep = 'generate';
+    renderGenerateStep();
   }
 
   function changeDirectionCount(count) {
@@ -314,7 +267,7 @@ function renderHome() {
     if (p.animations.length === 1) return toast('Debe quedar al menos una animación');
     const current = getActiveAnimation();
     els.confirmTitle.textContent = 'Eliminar animación';
-    els.confirmText.textContent = `Se eliminará “${current.name}”.`;
+    els.confirmText.textContent = `Se eliminará "${current.name}".`;
     els.confirmOkBtn.onclick = () => {
       p.animations = p.animations.filter(a => a.id !== current.id);
       p.activeAnimationId = p.animations[0].id;

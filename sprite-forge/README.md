@@ -1,75 +1,105 @@
-# CRIPTA Sprite Forge
+# CRIPTA Sprite Forge v0.7.0-cloud
 
-Editor colaborativo, móvil-first, para crear referencias, animaciones, frames y spritesheets de CRIPTA.
+Editor colaborativo de sprites pixel art con generación IA integrada y Sprite Cutter.
 
-**URL pública:** `https://egoivaldes-code.github.io/SkillEditor/sprite-forge/`
-
-## Características
-
-- Biblioteca familiar compartida mediante Supabase Realtime.
-- Identidad anónima por dispositivo y nombre visible.
-- Proyectos propios editables; proyectos ajenos duplicables; administración familiar opcional.
-- Imágenes en Supabase Storage + copia local en IndexedDB.
-- Sincronización en tiempo real entre móviles y PC.
-- Frames libres: añadir, eliminar, duplicar y reordenar (drag & drop táctil).
-- Animaciones de 2, 4 y 8 direcciones con modo espejo.
-- Generación de sprites protegida mediante Supabase Edge Function.
-- Cloudflare Workers AI con `@cf/black-forest-labs/flux-2-klein-4b`.
-- Control diario de cuota global y por usuario.
-- PWA instalable y modo demostración sin consumir IA.
-
-## Puesta en marcha
-
-Consulta **SETUP.md** para instrucciones completas. Resumen:
-
-1. Ejecuta la migración SQL en Supabase (`supabase/migrations/20260724_sprite_forge.sql`).
-2. Despliega la Edge Function `generate-sprite`.
-3. Añade los secretos de Cloudflare en Supabase.
-4. Activa Anonymous Sign-ins en Supabase Auth.
-5. Copia `config.example.js` → `config.js` con tu URL y clave publishable.
-6. Publica en GitHub Pages (la subcarpeta `sprite-forge/` aparece automáticamente).
-
-## Seguridad
-
-- `config.js` solo contiene la URL y la clave **publishable** (anon) de Supabase.
-- La clave de Cloudflare vive exclusivamente como secreto de la Edge Function.
-- Los contadores de cuota IA solo son manipulables por `service_role`.
-- Todas las tablas están protegidas con Row Level Security.
-
-## Estructura de archivos
+## Flujo de trabajo recomendado
 
 ```
-sprite-forge/
-├── index.html            — shell HTML (PWA)
-├── styles.css            — estilos mobile-first
-├── config.js             — URL y clave pública de Supabase
-├── config.example.js     — plantilla sin secretos
-├── sw.js                 — Service Worker (caché offline)
-├── manifest.webmanifest  — metadatos PWA
-├── icon.svg              — icono de la app
-├── js/
-│   ├── app-core.js       — estado global, IndexedDB, estructuras de datos
-│   ├── app-cloud.js      — integración Supabase (auth, DB, Storage, Realtime)
-│   ├── app-ui.js         — renderizado de la biblioteca y el editor
-│   ├── app-frames.js     — editor de frames, exportación
-│   └── app-utils.js      — utilidades y punto de entrada (init)
-├── supabase/
-│   ├── migrations/       — SQL de tablas, RLS y cuotas IA
-│   ├── functions/        — Edge Function generate-sprite
-│   └── config.toml       — referencia del proyecto Supabase
-├── .env.example          — plantilla de secretos para Supabase
-├── SETUP.md              — guía completa de configuración
-└── README.md             — este archivo
+1. Referencia  — Sube 1-4 imágenes de referencia del personaje.
+                 Marca una como "★ Referencia maestra" para que la IA
+                 mantenga identidad, ropa, colores y proporciones.
+
+2. Generar     — Elige animación, dirección, número de frames y variantes.
+                 Pulsa "Generar variantes" para crear varias spritesheets completas.
+                 La IA entrega una imagen por variante (fondo magenta, frames en fila).
+
+3. Editor      — Abre cualquier variante en el Sprite Cutter integrado.
+                 Ajusta columnas, filas, offsets y tamaño de celda hasta
+                 que la malla encuadre cada frame perfectamente.
+                 Selecciona los mejores frames (Ctrl+clic o Shift+clic).
+                 Pulsa "Añadir seleccionados" o "Añadir todos" al timeline.
+                 Repite con otras variantes para mezclar frames.
+
+4. Exportar    — El timeline ensamblado se exporta como spritesheet PNG final.
 ```
 
-## Desarrollo local
+## Funciones del Sprite Cutter integrado
 
-Sirve la carpeta mediante HTTP (no `file://`):
+- **Malla arrastrable** — arrastra la cuadrícula sobre la imagen para encuadrar
+- **Ajuste de malla** — columnas, filas, separaciones, márgenes, offsets y tamaño de celda
+- **Botones ◀▲▼▶** — nudge fino de ±1 px
+- **Transparencia magenta** — convierte fondo #FF00FF a transparente automáticamente
+- **Recorte interno** — elimina píxeles sobrantes transparentes o magenta
+- **Preview animado** — Play/Pausa, FPS, Zoom hasta 6×
+- **Selección múltiple** — Ctrl+clic (individual) · Shift+clic (rango)
+- **Reordenación táctil** — mantén pulsado y arrastra en móvil
+- **Flip, Duplicar, Borrar, Mover** por frame
+- **Undo** hasta 20 pasos
+- **Exportar PNG** (spritesheet), **Exportar frames individuales**, **Exportar JSON**
 
-```bash
-python -m http.server 8080
-# o
-npx serve .
+## Generación IA
+
+- **Spritesheet completa** — una sola llamada genera todos los frames en una imagen
+- **Varias variantes** — 1, 2, 4, 6 u 8 variantes en lote secuencial con progreso
+- **Cancelar en cualquier momento** — las variantes ya generadas se conservan
+- **Regenerar** — mismo seed (reproducible) o nuevo seed (variación)
+- **Aprobar** — marca las mejores variantes para control de calidad
+- **Referencia maestra ★** — siempre incluida como primera referencia en el prompt
+- **Modo demostración** — genera muñecos provisionales sin gastar cuota de IA
+
+## Modo frame a frame (Experimental)
+
+Acceso: **Generar → Generación frame a frame (Experimental)**
+
+> ⚠ Realiza una llamada por frame. Consume más cuota y produce más
+> inconsistencias entre frames. Usa la generación de spritesheets completas
+> cuando sea posible.
+
+## Datos por variante guardados
+
+```json
+{
+  "id": "uuid",
+  "name": "Walk E #1",
+  "seed": 123456789,
+  "animationType": "Walk",
+  "direction": "E",
+  "targetFrameCount": 6,
+  "width": 3072,
+  "height": 512,
+  "prompt": "...",
+  "imagePath": "owner/project/sheets/anim/variant.png",
+  "status": "ready",
+  "approved": false,
+  "createdAt": 1234567890,
+  "cutterSettings": {
+    "cols": "6", "rows": "1",
+    "gapX": "0", "gapY": "0",
+    "marginX": "0", "marginY": "0",
+    "offsetX": "0", "offsetY": "0",
+    "sizeAdjustX": "0", "sizeAdjustY": "0",
+    "bgMode": "transparent", "trim": "off"
+  }
+}
 ```
 
-La app arranca en modo local/demo si Supabase no está configurado.
+## Storage
+
+| Carpeta | Contenido |
+|---------|-----------|
+| `{owner}/{project}/references/` | Imágenes de referencia |
+| `{owner}/{project}/sheets/{animId}/` | Spritesheets completas (variantes) |
+| `{owner}/{project}/frames/{animId}/{dirId}/` | Frames del timeline (modo experimental) |
+
+## Retrocompatibilidad
+
+Los proyectos creados con versiones anteriores (v0.6.x) se cargan sin perder datos.
+`normalizeAnimation()` añade automáticamente `variants: []` si no existe.
+
+## Stack técnico
+
+- Pure HTML/CSS/JS — sin frameworks, sin bundler
+- Supabase (Auth anónimo, Storage, Edge Functions, Realtime)
+- Cloudflare Workers AI `flux-2-klein-4b`
+- PWA + Service Worker (cache v11)
+- GitHub Pages compatible (scope: `/SkillEditor/sprite-forge/`)

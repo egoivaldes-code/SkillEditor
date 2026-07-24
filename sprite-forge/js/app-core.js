@@ -71,7 +71,10 @@ const CONFIG = window.CRIPTA_SPRITE_CONFIG || {};
     setupError: '',
     realtimeChannel: null,
     saveStatus: 'idle',
-    saveQueued: false
+    saveQueued: false,
+    // Sheet workflow
+    sheetProgress: { active: false },
+    pendingCutterVariant: null
   };
 
   let dbPromise;

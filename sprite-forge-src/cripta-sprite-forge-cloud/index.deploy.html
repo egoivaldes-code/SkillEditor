@@ -1,0 +1,1746 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#151313">
+  <meta name="description" content="Editor colaborativo y generador de sprites de CRIPTA">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <style>
+:root {
+  --bg: #111010;
+  --panel: #1a1818;
+  --panel-2: #232020;
+  --line: #373131;
+  --text: #f5f1e9;
+  --muted: #aaa29a;
+  --accent: #c89b4d;
+  --accent-2: #7c5c2c;
+  --danger: #b85151;
+  --success: #5e9c69;
+  --magenta: #ff00ff;
+  --radius: 16px;
+  --shadow: 0 16px 40px rgba(0,0,0,.35);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+button, input, textarea, select { font: inherit; }
+button { cursor: pointer; }
+img { display: block; max-width: 100%; }
+.hidden { display: none !important; }
+.small { font-size: .82rem; }
+.muted { color: var(--muted); }
+.full { width: 100%; }
+
+.app-shell { min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
+.topbar { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 10px; min-height: 70px; padding: 10px 12px; background: rgba(17,16,16,.94); border-bottom: 1px solid var(--line); backdrop-filter: blur(12px); }
+.brand-wrap { min-width: 0; flex: 1; display: flex; align-items: center; gap: 10px; }
+.brand-mark { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(145deg,#7a5926,#2b2114); border: 1px solid #a67e3f; color: #ffe5ae; font-weight: 900; }
+.topbar h1 { margin: 0; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.topbar p { margin: 2px 0 0; font-size: .74rem; color: var(--muted); }
+.icon-btn { width: 42px; height: 42px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); color: var(--text); }
+
+.main { width: min(100%, 980px); margin: 0 auto; padding: 16px 12px 100px; }
+.section { display: grid; gap: 14px; }
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.section-head h2 { margin: 0; font-size: 1.05rem; }
+
+.primary-btn, .secondary-btn, .danger-btn, .ghost-btn { min-height: 46px; border-radius: 12px; padding: 0 16px; font-weight: 700; }
+.primary-btn { background: var(--accent); color: #1c160e; border: 1px solid #e4bb74; }
+.secondary-btn { background: var(--panel-2); color: var(--text); border: 1px solid var(--line); }
+.danger-btn { background: var(--danger); color: white; border: 1px solid #db6b6b; }
+.ghost-btn { background: transparent; color: var(--muted); border: 1px dashed var(--line); }
+.mini-btn { min-width: 38px; height: 38px; padding: 0 10px; border-radius: 10px; background: var(--panel-2); color: var(--text); border: 1px solid var(--line); }
+
+.hero-card { display: grid; gap: 12px; padding: 18px; border-radius: var(--radius); background: linear-gradient(160deg,#211d19,#171515); border: 1px solid #40382f; box-shadow: var(--shadow); }
+.hero-card h2 { margin: 0; font-size: 1.3rem; }
+.hero-card p { margin: 0; color: var(--muted); line-height: 1.45; }
+
+.project-list { display: grid; gap: 10px; }
+.project-card { display: grid; grid-template-columns: 78px 1fr auto; align-items: center; gap: 12px; padding: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; }
+.project-thumb { width: 78px; aspect-ratio: 1; border-radius: 10px; background: #2b2727; border: 1px solid var(--line); overflow: hidden; display: grid; place-items: center; color: var(--muted); font-size: .75rem; }
+.project-thumb img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.project-info { min-width: 0; }
+.project-info h3 { margin: 0 0 6px; font-size: .98rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meta-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { display: inline-flex; align-items: center; min-height: 26px; padding: 0 9px; border-radius: 999px; background: #292424; border: 1px solid var(--line); color: var(--muted); font-size: .72rem; }
+.project-actions { display: grid; gap: 6px; }
+
+.card { padding: 14px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); }
+.card h3 { margin: 0 0 12px; font-size: .98rem; }
+.field { display: grid; gap: 7px; }
+.field + .field { margin-top: 12px; }
+.field span { color: var(--muted); font-size: .78rem; font-weight: 700; }
+.field input, .field textarea, .field select { width: 100%; min-height: 46px; border-radius: 12px; border: 1px solid var(--line); background: #141313; color: var(--text); padding: 11px 12px; outline: none; }
+.field textarea { min-height: 100px; resize: vertical; }
+.field input:focus, .field textarea:focus, .field select:focus { border-color: var(--accent); }
+.field-grid { display: grid; gap: 12px; }
+
+.segmented { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 6px; padding: 5px; background: #131212; border: 1px solid var(--line); border-radius: 14px; overflow-x: auto; }
+.segmented button { min-height: 40px; border-radius: 10px; background: transparent; color: var(--muted); border: 0; font-weight: 700; white-space: nowrap; }
+.segmented button.active { background: var(--panel-2); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
+
+.ref-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+.ref-card { position: relative; aspect-ratio: 1; border-radius: 12px; overflow: hidden; background: #2b2727; border: 1px solid var(--line); display: grid; place-items: center; }
+.ref-card img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.ref-card .remove-ref { position: absolute; top: 6px; right: 6px; width: 34px; height: 34px; border-radius: 9px; background: rgba(0,0,0,.72); color: white; border: 1px solid rgba(255,255,255,.18); }
+.ref-add { aspect-ratio: 1; border-radius: 12px; border: 1px dashed #5c5151; color: var(--muted); background: #151414; display: grid; place-items: center; text-align: center; padding: 10px; }
+
+.bottom-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 25; display: grid; grid-template-columns: repeat(4,1fr); gap: 4px; padding: 8px 8px calc(8px + env(safe-area-inset-bottom)); background: rgba(17,16,16,.96); border-top: 1px solid var(--line); backdrop-filter: blur(12px); }
+.nav-item { min-height: 54px; display: grid; place-items: center; align-content: center; gap: 3px; border-radius: 12px; border: 0; background: transparent; color: var(--muted); font-size: .68rem; }
+.nav-item span { width: 23px; height: 23px; display: grid; place-items: center; border-radius: 999px; border: 1px solid var(--line); font-size: .7rem; }
+.nav-item.active { background: var(--panel-2); color: var(--text); }
+.nav-item.active span { background: var(--accent); color: #17110a; border-color: var(--accent); }
+
+.direction-tabs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.direction-tabs::-webkit-scrollbar { display: none; }
+.direction-tabs button { flex: 0 0 auto; min-height: 40px; padding: 0 13px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--muted); }
+.direction-tabs button.active { color: #17110a; background: var(--accent); border-color: var(--accent); font-weight: 800; }
+
+.frame-toolbar { position: sticky; top: 80px; z-index: 10; display: grid; grid-template-columns: auto 68px minmax(0,1fr) auto; gap: 8px; padding: 8px; margin: -2px -2px 4px; background: rgba(17,16,16,.92); border-radius: 14px; backdrop-filter: blur(8px); }
+.slot-count-input { width: 68px; min-height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); color: var(--text); padding: 0 8px; text-align: center; }
+.frame-toolbar .secondary-btn { min-height: 38px; padding-inline: 10px; }
+.frame-list { display: grid; gap: 10px; }
+.frame-card { position: relative; display: grid; grid-template-columns: 28px 96px minmax(0,1fr); align-items: center; gap: 10px; padding: 9px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line); touch-action: none; }
+.frame-card.dragging { opacity: .55; border-color: var(--accent); transform: scale(.99); }
+.drag-handle { font-size: 1.2rem; color: var(--muted); text-align: center; user-select: none; touch-action: none; }
+.frame-preview { width: 96px; aspect-ratio: 1; border-radius: 10px; overflow: hidden; background: var(--magenta); border: 1px solid #5c5151; display: grid; place-items: center; color: #2b002b; font-weight: 900; }
+.frame-preview img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.frame-body { min-width: 0; }
+.frame-title { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-bottom: 8px; }
+.frame-title strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.frame-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.frame-actions button { min-height: 36px; }
+.frame-status { font-size: .72rem; color: var(--muted); }
+.frame-status.ready { color: var(--success); }
+.frame-status.loading { color: var(--accent); }
+
+.canvas-wrap { overflow: auto; border-radius: 14px; border: 1px solid var(--line); background: #171515; padding: 10px; }
+.canvas-wrap canvas { display: block; max-width: none; background: repeating-conic-gradient(#262222 0 25%, #1d1a1a 0 50%) 50%/18px 18px; image-rendering: pixelated; }
+.export-grid { display: grid; gap: 10px; }
+.stats-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; }
+.stat { padding: 10px; border-radius: 12px; background: #151414; border: 1px solid var(--line); text-align: center; }
+.stat strong { display: block; font-size: 1.1rem; }
+.stat span { font-size: .68rem; color: var(--muted); }
+
+.dialog { width: min(92vw, 520px); border: 0; padding: 0; background: transparent; color: var(--text); }
+.dialog::backdrop { background: rgba(0,0,0,.72); backdrop-filter: blur(4px); }
+.dialog-card { display: grid; gap: 14px; padding: 18px; border-radius: 18px; background: var(--panel); border: 1px solid var(--line); box-shadow: var(--shadow); }
+.dialog-card.compact { max-width: 420px; }
+.dialog-head { display: flex; justify-content: space-between; align-items: center; }
+.dialog-head h2, .dialog-card h2 { margin: 0; font-size: 1.1rem; }
+.dialog-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.toast { position: fixed; left: 50%; bottom: 88px; z-index: 100; transform: translateX(-50%); max-width: calc(100vw - 24px); padding: 11px 14px; border-radius: 12px; background: #f2e7d2; color: #1d1710; box-shadow: var(--shadow); font-weight: 700; animation: toastIn .18s ease-out; }
+@keyframes toastIn { from { opacity: 0; transform: translate(-50%,12px); } }
+
+.empty-state { padding: 34px 16px; text-align: center; color: var(--muted); border: 1px dashed var(--line); border-radius: var(--radius); }
+.inline-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+@media (min-width: 720px) {
+  .main { padding-inline: 20px; }
+  .field-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .ref-grid { grid-template-columns: repeat(4,minmax(0,1fr)); }
+  .project-list { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .frame-list { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .frame-card { grid-template-columns: 28px 120px minmax(0,1fr); }
+  .frame-preview { width: 120px; }
+  .bottom-nav { left: 50%; transform: translateX(-50%); max-width: 640px; border-left: 1px solid var(--line); border-right: 1px solid var(--line); border-radius: 16px 16px 0 0; }
+}
+
+.warning-note{margin:12px 0;padding:10px 12px;border:1px solid rgba(255,190,70,.45);border-radius:12px;background:rgba(255,190,70,.10);color:#f5d38b;font-size:.88rem;line-height:1.35}
+
+/* Cloud/collaboration additions */
+.connection-pill { display:inline-flex; align-items:center; gap:7px; min-height:30px; padding:0 10px; border:1px solid var(--line); border-radius:999px; color:var(--muted); background:#171414; font-size:.75rem; }
+.connection-pill::before { content:""; width:8px; height:8px; border-radius:50%; background:#8b7777; }
+.connection-pill.online::before { background:var(--success); box-shadow:0 0 0 3px rgba(94,156,105,.14); }
+.connection-pill.syncing::before { background:var(--accent); animation:pulse 1s infinite; }
+.connection-pill.error::before { background:var(--danger); }
+@keyframes pulse { 50% { opacity:.35; } }
+
+.cloud-banner { display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; padding:11px 12px; border:1px solid var(--line); border-radius:14px; background:var(--panel); }
+.cloud-user { min-width:0; }
+.cloud-user strong { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cloud-user small { display:block; margin-top:3px; color:var(--muted); }
+.author-line { margin-top:6px; color:var(--muted); font-size:.72rem; }
+.readonly-note { padding:10px 12px; border:1px solid rgba(200,155,77,.45); border-radius:12px; background:rgba(200,155,77,.09); color:#e8c98e; font-size:.84rem; line-height:1.4; }
+.setup-note { padding:13px; border:1px solid rgba(184,81,81,.55); border-radius:12px; background:rgba(184,81,81,.09); color:#f1b5b5; line-height:1.45; }
+.setup-note code { overflow-wrap:anywhere; }
+.compact-card { padding:10px; border-radius:12px; }
+.info-row { display:grid; grid-template-columns:minmax(90px,.7fr) minmax(0,1.3fr); gap:8px; align-items:center; min-height:34px; border-bottom:1px solid rgba(255,255,255,.06); }
+.info-row:last-child { border-bottom:0; }
+.info-row span { color:var(--muted); font-size:.76rem; }
+.info-row strong,.info-row code { min-width:0; overflow-wrap:anywhere; text-align:right; font-size:.78rem; }
+.check-row { display:flex; gap:11px; align-items:flex-start; padding:12px; border:1px solid var(--line); border-radius:12px; background:#141313; }
+.check-row input { width:20px; height:20px; flex:0 0 auto; accent-color:var(--accent); }
+.check-row span { display:grid; gap:3px; }
+.check-row small { color:var(--muted); line-height:1.35; }
+button[disabled], input[disabled], select[disabled], textarea[disabled] { opacity:.5; cursor:not-allowed; }
+.project-card.readonly { border-color:#443b31; }
+.project-card.syncing { box-shadow:inset 3px 0 0 var(--accent); }
+.badge-admin { color:#1c160e; background:var(--accent); border-color:var(--accent); }
+.save-state { font-size:.72rem; color:var(--muted); }
+.save-state.saved { color:var(--success); }
+.save-state.error { color:#e99393; }
+.api-note { display:flex; justify-content:space-between; gap:10px; align-items:center; flex-wrap:wrap; }
+
+@media (max-width: 460px) {
+  .frame-toolbar { grid-template-columns:auto 58px minmax(0,1fr) auto; }
+  .frame-toolbar .secondary-btn { font-size:.76rem; padding-inline:8px; }
+  .project-card { grid-template-columns:66px 1fr auto; gap:9px; }
+  .project-thumb { width:66px; }
+  .inline-actions { grid-template-columns:1fr; }
+}
+
+  </style>
+  <title>CRIPTA Sprite Forge</title>
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="topbar">
+      <button id="backBtn" class="icon-btn hidden" aria-label="Volver">←</button>
+      <div class="brand-wrap">
+        <div class="brand-mark">C</div>
+        <div>
+          <h1 id="pageTitle">Sprite Forge</h1>
+          <p id="pageSubtitle">Conectando…</p>
+        </div>
+      </div>
+      <button id="settingsBtn" class="icon-btn" aria-label="Ajustes">⚙</button>
+    </header>
+
+    <main id="main" class="main"></main>
+
+    <nav id="editorNav" class="bottom-nav hidden" aria-label="Pasos del proyecto">
+      <button data-step="base" class="nav-item active"><span>1</span>Base</button>
+      <button data-step="config" class="nav-item"><span>2</span>Config</button>
+      <button data-step="frames" class="nav-item"><span>3</span>Frames</button>
+      <button data-step="export" class="nav-item"><span>4</span>Exportar</button>
+    </nav>
+  </div>
+
+  <input id="referenceInput" type="file" accept="image/*" multiple hidden>
+  <input id="frameInput" type="file" accept="image/*" hidden>
+
+  <dialog id="settingsDialog" class="dialog">
+    <form method="dialog" class="dialog-card">
+      <div class="dialog-head">
+        <h2>Cuenta y ajustes</h2>
+        <button value="cancel" class="icon-btn" aria-label="Cerrar">✕</button>
+      </div>
+      <label class="field">
+        <span>Tu nombre visible</span>
+        <input id="authorNameInput" maxlength="40" placeholder="Ej.: Egoi">
+      </label>
+      <div class="card compact-card">
+        <div class="info-row"><span>Conexión</span><strong id="connectionStatusText">—</strong></div>
+        <div class="info-row"><span>ID de este dispositivo</span><code id="deviceUserIdText">—</code></div>
+        <div class="info-row"><span>Permisos</span><strong id="roleStatusText">—</strong></div>
+      </div>
+      <label class="check-row">
+        <input id="demoModeInput" type="checkbox">
+        <span><strong>Modo demostración</strong><small>Genera muñecos provisionales sin gastar la cuota de IA.</small></span>
+      </label>
+      <p class="muted small">La clave privada de Cloudflare nunca se guarda en el navegador. La generación pasa por una función protegida de Supabase.</p>
+      <button id="saveSettingsBtn" value="default" class="primary-btn full">Guardar</button>
+    </form>
+  </dialog>
+
+  <dialog id="confirmDialog" class="dialog">
+    <form method="dialog" class="dialog-card compact">
+      <h2 id="confirmTitle">Confirmar</h2>
+      <p id="confirmText" class="muted"></p>
+      <div class="dialog-actions">
+        <button value="cancel" class="secondary-btn">Cancelar</button>
+        <button id="confirmOkBtn" value="default" class="danger-btn">Eliminar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+window.CRIPTA_SPRITE_CONFIG = Object.freeze({
+  supabaseUrl: 'https://tyilsfxqctrgozlchwxc.supabase.co',
+  supabaseKey: 'sb_publishable_iW5vLkuWMvW7Vgoym-RYmw_tvweRYu4',
+  projectsTable: 'sprite_projects',
+  assetsBucket: 'sprite-assets',
+  generationFunction: 'generate-sprite',
+  appVersion: '0.3.0-cloud'
+});
+
+  </script>
+  <script>
+(() => {
+  'use strict';
+
+  const CONFIG = window.CRIPTA_SPRITE_CONFIG || {};
+  const sb = window.supabase?.createClient?.(CONFIG.supabaseUrl, CONFIG.supabaseKey, {
+    auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+  });
+  const AUTHOR_KEY = 'cripta_sprite_author_v1';
+  const SETTINGS_KEY = 'cripta_sprite_settings_v2';
+
+  const DB_NAME = 'cripta-sprite-forge';
+  const DB_VERSION = 1;
+  const STORE = 'projects';
+  const NORMAL_DIRECTION_DEFS = {
+    2: [{ key: 'E', name: 'Derecha' }, { key: 'W', name: 'Izquierda' }],
+    4: [{ key: 'S', name: 'Abajo' }, { key: 'W', name: 'Izquierda' }, { key: 'E', name: 'Derecha' }, { key: 'N', name: 'Arriba' }],
+    8: [
+      { key: 'S', name: 'Abajo' },
+      { key: 'SW', name: 'Abajo-Izq' },
+      { key: 'W', name: 'Izquierda' },
+      { key: 'NW', name: 'Arriba-Izq' },
+      { key: 'N', name: 'Arriba' },
+      { key: 'NE', name: 'Arriba-Der' },
+      { key: 'E', name: 'Derecha' },
+      { key: 'SE', name: 'Abajo-Der' }
+    ]
+  };
+  const MIRROR_DIRECTION_DEFS = {
+    2: [{ key: 'E', name: 'Derecha' }],
+    4: [{ key: 'E', name: 'Derecha' }, { key: 'N', name: 'Arriba' }, { key: 'S', name: 'Abajo' }],
+    8: [{ key: 'N', name: 'Norte' }, { key: 'S', name: 'Sur' }, { key: 'E', name: 'Este' }, { key: 'NE', name: 'Noreste' }, { key: 'SE', name: 'Sureste' }]
+  };
+
+  const els = {
+    main: document.getElementById('main'),
+    pageTitle: document.getElementById('pageTitle'),
+    pageSubtitle: document.getElementById('pageSubtitle'),
+    backBtn: document.getElementById('backBtn'),
+    settingsBtn: document.getElementById('settingsBtn'),
+    editorNav: document.getElementById('editorNav'),
+    referenceInput: document.getElementById('referenceInput'),
+    frameInput: document.getElementById('frameInput'),
+    settingsDialog: document.getElementById('settingsDialog'),
+    authorNameInput: document.getElementById('authorNameInput'),
+    connectionStatusText: document.getElementById('connectionStatusText'),
+    deviceUserIdText: document.getElementById('deviceUserIdText'),
+    roleStatusText: document.getElementById('roleStatusText'),
+    demoModeInput: document.getElementById('demoModeInput'),
+    saveSettingsBtn: document.getElementById('saveSettingsBtn'),
+    confirmDialog: document.getElementById('confirmDialog'),
+    confirmTitle: document.getElementById('confirmTitle'),
+    confirmText: document.getElementById('confirmText'),
+    confirmOkBtn: document.getElementById('confirmOkBtn')
+  };
+
+  const state = {
+    projects: [],
+    currentProject: null,
+    currentStep: 'base',
+    selectedDirection: null,
+    pendingFrameUploadId: null,
+    drag: null,
+    urls: new Set(),
+    previewFlipByDirection: {},
+    settings: loadSettings(),
+    storageAvailable: true,
+    currentUser: null,
+    authorName: localStorage.getItem(AUTHOR_KEY) || '',
+    isAdmin: false,
+    online: false,
+    syncing: false,
+    setupError: '',
+    realtimeChannel: null,
+    saveStatus: 'idle',
+    saveQueued: false
+  };
+
+  let dbPromise;
+  let autosaveTimer;
+
+  init();
+
+  async function init() {
+    bindGlobalEvents();
+    await requestPersistentStorage();
+    try {
+      await initSupabase();
+      state.projects = await getAllProjects();
+      state.online = true;
+      subscribeRealtime();
+    } catch (error) {
+      console.error('No se pudo iniciar el modo colaborativo:', error);
+      state.online = false;
+      state.setupError = error?.message || String(error);
+      try {
+        state.projects = await getAllLocalProjects();
+      } catch {
+        state.storageAvailable = false;
+        state.projects = [];
+      }
+    }
+    renderHome();
+    registerServiceWorker();
+    if (!state.authorName) setTimeout(changeAuthorName, 250);
+  }
+
+  function bindGlobalEvents() {
+    els.backBtn.addEventListener('click', async () => {
+      if (state.currentProject) {
+        await saveCurrentNow();
+        state.currentProject = null;
+        state.currentStep = 'base';
+        cleanupUrls();
+        renderHome();
+      }
+    });
+
+    els.settingsBtn.addEventListener('click', () => {
+      els.authorNameInput.value = state.authorName || '';
+      els.demoModeInput.checked = !!state.settings.demoMode;
+      els.connectionStatusText.textContent = state.online ? 'Supabase conectado' : 'Modo local / sin configurar';
+      els.deviceUserIdText.textContent = state.currentUser?.id || 'Sin sesión';
+      els.roleStatusText.textContent = state.isAdmin ? 'Administrador' : (state.currentUser ? 'Autor' : 'Local');
+      els.settingsDialog.showModal();
+    });
+
+    els.saveSettingsBtn.addEventListener('click', () => {
+      state.authorName = els.authorNameInput.value.trim() || 'Sin nombre';
+      state.settings = { ...state.settings, demoMode: !!els.demoModeInput.checked };
+      localStorage.setItem(AUTHOR_KEY, state.authorName);
+      localStorage.setItem(SETTINGS_KEY, JSON.stringify(state.settings));
+      toast('Ajustes guardados');
+      renderHome();
+    });
+
+    els.editorNav.addEventListener('click', (event) => {
+      const btn = event.target.closest('[data-step]');
+      if (!btn || !state.currentProject) return;
+      state.currentStep = btn.dataset.step;
+      renderEditor();
+    });
+
+    els.referenceInput.addEventListener('change', async () => {
+      if (!canManageProject(state.currentProject)) return toast('No puedes modificar este proyecto');
+      const files = [...els.referenceInput.files].slice(0, Math.max(0, 4 - state.currentProject.references.length));
+      for (const file of files) {
+        const blob = await resizeImageBlob(file, 480, 480);
+        state.currentProject.references.push({ id: uid(), name: file.name, blob, imagePath: '', status: 'ready' });
+      }
+      els.referenceInput.value = '';
+      scheduleSave();
+      renderEditor();
+    });
+
+    els.frameInput.addEventListener('change', async () => {
+      if (!canManageProject(state.currentProject)) return toast('No puedes modificar este proyecto');
+      const file = els.frameInput.files?.[0];
+      if (!file || !state.pendingFrameUploadId) return;
+      const frame = findFrameById(state.pendingFrameUploadId);
+      if (frame) {
+        frame.blob = file;
+        frame.imagePath = '';
+        frame.status = 'ready';
+        frame.updatedAt = Date.now();
+        scheduleSave();
+      }
+      state.pendingFrameUploadId = null;
+      els.frameInput.value = '';
+      renderEditor();
+    });
+  }
+
+  function loadSettings() {
+    try { return JSON.parse(localStorage.getItem(SETTINGS_KEY)) || { demoMode: false }; }
+    catch { return { demoMode: false }; }
+  }
+
+  async function requestPersistentStorage() {
+    try {
+      if (navigator.storage?.persist) await navigator.storage.persist();
+    } catch {}
+  }
+
+  function openDb() {
+    if (!dbPromise) {
+      dbPromise = new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE, { keyPath: 'id' });
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+    return dbPromise;
+  }
+
+  async function getAllLocalProjects() {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+      const tx = db.transaction(STORE, 'readonly');
+      const req = tx.objectStore(STORE).getAll();
+      req.onsuccess = () => resolve(req.result.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0)));
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function putLocalProject(project) {
+    if (!state.storageAvailable) return;
+    try {
+      const db = await openDb();
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).put(project);
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+    } catch (error) {
+      state.storageAvailable = false;
+      console.warn('No se pudo guardar el proyecto:', error);
+    }
+  }
+
+  async function deleteLocalProject(id) {
+    if (!state.storageAvailable) return;
+    try {
+      const db = await openDb();
+      return await new Promise((resolve, reject) => {
+        const tx = db.transaction(STORE, 'readwrite');
+        tx.objectStore(STORE).delete(id);
+        tx.oncomplete = resolve;
+        tx.onerror = () => reject(tx.error);
+      });
+    } catch (error) {
+      state.storageAvailable = false;
+      console.warn('No se pudo eliminar el proyecto:', error);
+    }
+  }
+
+
+  async function initSupabase() {
+    if (!sb || !CONFIG.supabaseUrl || !CONFIG.supabaseKey) throw new Error('Falta config.js de Supabase');
+    const { data: { session }, error: sessionError } = await sb.auth.getSession();
+    if (sessionError) throw sessionError;
+    if (session?.user) state.currentUser = session.user;
+    else {
+      const { data, error } = await sb.auth.signInAnonymously();
+      if (error) throw error;
+      state.currentUser = data.user;
+    }
+    const { data: adminFlag, error: adminError } = await sb.rpc('is_sprite_admin');
+    if (!adminError) state.isAdmin = Boolean(adminFlag);
+    if (!state.authorName) state.authorName = `Familiar ${state.currentUser.id.slice(0, 4)}`;
+  }
+
+  async function getAllProjects() {
+    if (!state.currentUser) return getAllLocalProjects();
+    const { data, error } = await sb
+      .from(CONFIG.projectsTable)
+      .select('*')
+      .order('updated_at', { ascending: false });
+    if (error) throw error;
+    const projects = (data || []).map(projectFromRow);
+    for (const project of projects) await putLocalProject(project);
+    return projects;
+  }
+
+  async function putProject(project) {
+    normalizeProject(project);
+    project.updatedAt = Date.now();
+    await putLocalProject(project);
+    if (!state.online || !state.currentUser) return;
+    if (!canManageProject(project)) throw new Error('No tienes permiso para guardar este proyecto');
+    await persistProjectAssets(project);
+    const row = projectToRow(project);
+    const { error } = project.cloudPersisted
+      ? await sb.from(CONFIG.projectsTable).update(row).eq('id', project.id)
+      : await sb.from(CONFIG.projectsTable).insert({ id: project.id, owner_id: project.ownerId, ...row });
+    if (error) throw error;
+    project.cloudPersisted = true;
+    await putLocalProject(project);
+  }
+
+  async function deleteProjectDb(id) {
+    const project = state.projects.find(item => item.id === id);
+    if (project && state.online && state.currentUser) {
+      if (!canManageProject(project)) throw new Error('No tienes permiso para eliminarlo');
+      const paths = collectAssetPaths(project);
+      if (paths.length) await sb.storage.from(CONFIG.assetsBucket).remove(paths);
+      const { error } = await sb.from(CONFIG.projectsTable).delete().eq('id', id);
+      if (error) throw error;
+    }
+    await deleteLocalProject(id);
+  }
+
+  function projectFromRow(row) {
+    const project = structuredClone(row.payload || {});
+    project.id = row.id;
+    project.name = row.name || project.name || 'Sin nombre';
+    project.ownerId = row.owner_id;
+    project.author = row.author || 'Sin nombre';
+    project.thumbnailPath = row.thumbnail_path || '';
+    project.createdAt = new Date(row.created_at).getTime();
+    project.updatedAt = new Date(row.updated_at).getTime();
+    project.cloudPersisted = true;
+    normalizeProject(project);
+    return project;
+  }
+
+  function projectToRow(project) {
+    const payload = serializeProject(project);
+    const isOriginalOwner = project.ownerId === state.currentUser?.id;
+    return {
+      name: project.name,
+      author: isOriginalOwner ? (state.authorName || project.author || 'Sin nombre') : (project.author || 'Sin nombre'),
+      payload,
+      thumbnail_path: getProjectThumbAsset(project)?.imagePath || project.thumbnailPath || '',
+      updated_at: new Date().toISOString()
+    };
+  }
+
+  function serializeProject(project) {
+    const clone = structuredClone(project);
+    delete clone.ownerId;
+    delete clone.author;
+    delete clone.thumbnailPath;
+    delete clone.cloudPersisted;
+    const cleanAsset = asset => {
+      if (!asset) return;
+      delete asset.blob;
+      delete asset.imageUrl;
+    };
+    (clone.references || []).forEach(cleanAsset);
+    for (const anim of clone.animations || []) for (const dir of anim.directions || []) for (const frame of dir.frames || []) cleanAsset(frame);
+    return clone;
+  }
+
+  function canManageProject(project) {
+    if (!project) return false;
+    if (!state.online) return true;
+    return Boolean(state.currentUser && (state.isAdmin || project.ownerId === state.currentUser.id));
+  }
+
+  async function persistProjectAssets(project) {
+    const jobs = [];
+    for (const ref of project.references || []) if (ref.blob && !ref.imagePath) jobs.push(uploadAsset(project, ref, 'references'));
+    for (const anim of project.animations || []) {
+      for (const dir of anim.directions || []) {
+        for (const frame of dir.frames || []) if (frame.blob && !frame.imagePath) jobs.push(uploadAsset(project, frame, `frames/${anim.id}/${dir.id}`));
+      }
+    }
+    for (const job of jobs) await job;
+  }
+
+  async function uploadAsset(project, asset, folder) {
+    const ext = mimeExtension(asset.blob?.type || 'image/png');
+    const path = `${project.ownerId}/${project.id}/${folder}/${asset.id}.${ext}`;
+    const { error } = await sb.storage.from(CONFIG.assetsBucket).upload(path, asset.blob, {
+      contentType: asset.blob.type || 'image/png', upsert: true, cacheControl: '3600'
+    });
+    if (error) throw error;
+    asset.imagePath = path;
+    return path;
+  }
+
+  async function removeAsset(asset) {
+    if (!asset?.imagePath || !state.online) return;
+    const { error } = await sb.storage.from(CONFIG.assetsBucket).remove([asset.imagePath]);
+    if (error) console.warn('No se pudo borrar el asset remoto:', error);
+    asset.imagePath = '';
+  }
+
+  function publicAssetUrl(path) {
+    if (!path || !sb) return '';
+    return sb.storage.from(CONFIG.assetsBucket).getPublicUrl(path).data?.publicUrl || '';
+  }
+
+  function collectAssetPaths(project) {
+    const paths = [];
+    for (const ref of project.references || []) if (ref.imagePath) paths.push(ref.imagePath);
+    for (const anim of project.animations || []) for (const dir of anim.directions || []) for (const frame of dir.frames || []) if (frame.imagePath) paths.push(frame.imagePath);
+    return [...new Set(paths)];
+  }
+
+  function subscribeRealtime() {
+    if (!sb || state.realtimeChannel) return;
+    state.realtimeChannel = sb.channel('sprite-projects-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: CONFIG.projectsTable }, async payload => {
+        if (state.syncing) return;
+        try {
+          const fresh = await getAllProjects();
+          state.projects = fresh;
+          if (!state.currentProject) renderHome();
+          else if (payload.new?.id === state.currentProject.id && !canManageProject(state.currentProject)) {
+            state.currentProject = fresh.find(p => p.id === state.currentProject.id) || state.currentProject;
+            renderEditor();
+          }
+        } catch (error) { console.warn(error); }
+      })
+      .subscribe();
+  }
+
+  function registerServiceWorker() {
+    if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  }
+
+  function changeAuthorName() {
+    const value = window.prompt('¿Qué nombre quieres mostrar a tu familia?', state.authorName || '');
+    if (value?.trim()) {
+      state.authorName = value.trim().slice(0, 40);
+      localStorage.setItem(AUTHOR_KEY, state.authorName);
+      renderHome();
+    }
+  }
+
+  function createProject() {
+    const now = Date.now();
+    const project = {
+      id: uid(),
+      ownerId: state.currentUser?.id || 'local',
+      author: state.authorName || 'Sin nombre',
+      cloudPersisted: false,
+      name: 'Nuevo personaje',
+      category: 'Personaje',
+      basePrompt: 'Pixel art detallado, RPG medieval oscuro, vista top-down 3/4, fondo magenta chroma #FF00FF, personaje centrado, misma escala y encuadre.',
+      negativePrompt: 'texto, interfaz, suelo, sombras sobre el fondo, deformidades, frames unidos',
+      references: [],
+      animations: [createAnimation('Walk', 2, 6)],
+      activeAnimationId: null,
+      createdAt: now,
+      updatedAt: now
+    };
+    project.activeAnimationId = project.animations[0].id;
+    return project;
+  }
+
+  function createAnimation(type = 'Walk', directionCount = 2, frameCount = 6, mirror = false) {
+    const directionDefs = getDirectionDefs(directionCount, mirror);
+    return {
+      id: uid(),
+      name: type,
+      type,
+      directionCount,
+      mirror,
+      initialFrameCount: frameCount,
+      width: 512,
+      height: 512,
+      background: '#FF00FF',
+      directions: directionDefs.map(def => ({
+        id: uid(),
+        key: def.key,
+        name: def.name,
+        frames: Array.from({ length: frameCount }, (_, i) => createFrame(i + 1))
+      }))
+    };
+  }
+
+  function createFrame(index) {
+    return {
+      id: uid(),
+      label: `Frame ${index}`,
+      prompt: '',
+      status: 'empty',
+      blob: null,
+      imagePath: '',
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+  }
+
+  function getDirectionDefs(directionCount = 2, mirror = false) {
+    const defs = mirror ? MIRROR_DIRECTION_DEFS[directionCount] : NORMAL_DIRECTION_DEFS[directionCount];
+    return (defs || NORMAL_DIRECTION_DEFS[2]).map(def => ({ ...def }));
+  }
+
+  function directionKeyFromName(name = '') {
+    const normalized = String(name).trim().toLowerCase();
+    const map = {
+      'derecha': 'E', 'este': 'E',
+      'izquierda': 'W', 'oeste': 'W',
+      'arriba': 'N', 'norte': 'N',
+      'abajo': 'S', 'sur': 'S',
+      'arriba-der': 'NE', 'noreste': 'NE',
+      'arriba-izq': 'NW', 'noroeste': 'NW',
+      'abajo-der': 'SE', 'sureste': 'SE',
+      'abajo-izq': 'SW', 'suroeste': 'SW'
+    };
+    return map[normalized] || normalized.toUpperCase() || 'E';
+  }
+
+  function mirrorSummary(directionCount) {
+    return ({
+      2: '1 dirección generada: Derecha.',
+      4: '3 direcciones generadas: Derecha, Arriba y Abajo.',
+      8: '5 direcciones generadas: Norte, Sur, Este, Noreste y Sureste.'
+    })[directionCount] || '';
+  }
+
+  function directionChipText(anim) {
+    const generated = getDirectionDefs(anim?.directionCount || 2, !!anim?.mirror).length;
+    return anim?.mirror ? `${generated}/${anim.directionCount} dir. espejo` : `${anim?.directionCount || generated} dir.`;
+  }
+
+  function normalizeAnimation(anim) {
+    if (!anim) return;
+    if (typeof anim.mirror !== 'boolean') anim.mirror = false;
+    if (!Array.isArray(anim.directions)) anim.directions = [];
+    anim.directions.forEach(dir => {
+      dir.key = dir.key || directionKeyFromName(dir.name);
+      if (!Array.isArray(dir.frames)) dir.frames = [];
+      dir.frames.forEach(frame => { frame.imagePath = frame.imagePath || ''; });
+      renumberFrames(dir);
+    });
+  }
+
+  function normalizeProject(project) {
+    if (!project) return;
+    project.ownerId = project.ownerId || state.currentUser?.id || 'local';
+    project.author = project.author || state.authorName || 'Sin nombre';
+    project.references = Array.isArray(project.references) ? project.references : [];
+    project.references.forEach(ref => { ref.imagePath = ref.imagePath || ''; });
+    project.animations = Array.isArray(project.animations) ? project.animations : [];
+    project.animations.forEach(normalizeAnimation);
+  }
+
+  function syncAnimationDirections(anim) {
+    normalizeAnimation(anim);
+    const oldByKey = new Map(anim.directions.map(dir => [dir.key || directionKeyFromName(dir.name), dir]));
+    const defs = getDirectionDefs(anim.directionCount, !!anim.mirror);
+    anim.directions = defs.map(def => {
+      const existing = oldByKey.get(def.key);
+      if (existing) {
+        existing.key = def.key;
+        existing.name = def.name;
+        if (!Array.isArray(existing.frames) || !existing.frames.length) {
+          existing.frames = Array.from({ length: anim.initialFrameCount }, (_, i) => createFrame(i + 1));
+        }
+        renumberFrames(existing);
+        return existing;
+      }
+      return {
+        id: uid(),
+        key: def.key,
+        name: def.name,
+        frames: Array.from({ length: anim.initialFrameCount }, (_, i) => createFrame(i + 1))
+      };
+    });
+    state.selectedDirection = anim.directions[0]?.id || null;
+  }
+
+
+  function getFullDirectionDefs(directionCount = 2) {
+    return (NORMAL_DIRECTION_DEFS[directionCount] || NORMAL_DIRECTION_DEFS[2]).map(def => ({ ...def }));
+  }
+
+  function getMirrorSourceKey(targetKey) {
+    return ({ W: 'E', NW: 'NE', SW: 'SE' })[targetKey] || null;
+  }
+
+  function isPreviewFlipped(directionId) {
+    return !!state.previewFlipByDirection?.[directionId];
+  }
+
+  function toggleDirectionPreviewFlip(directionId) {
+    state.previewFlipByDirection[directionId] = !state.previewFlipByDirection[directionId];
+  }
+
+  function duplicateSelectedDirectionToTarget() {
+    const anim = getActiveAnimation();
+    const source = getSelectedDirection();
+    const targets = anim.directions.filter(d => d.id !== source.id);
+    if (!targets.length) return toast('No hay otra dirección disponible');
+    const message = targets.map((d, i) => `${i + 1}. ${d.name}`).join('\n');
+    const answer = window.prompt(`Copiar todos los frames de “${source.name}” a:\n\n${message}\n\nEscribe el número del destino.`);
+    if (answer == null) return;
+    const idx = Number.parseInt(answer, 10) - 1;
+    const target = targets[idx];
+    if (!target) return toast('Dirección no válida');
+    target.frames = source.frames.map((frame, i) => {
+      const copy = structuredClone(frame);
+      copy.id = uid();
+      copy.label = `Frame ${i + 1}`;
+      copy.createdAt = Date.now();
+      copy.updatedAt = Date.now();
+      return copy;
+    });
+    renumberFrames(target);
+    scheduleSave();
+    toast(`Dirección copiada a ${target.name}`);
+    renderEditor();
+  }
+
+  function getExportDirections(anim, expandMirror = false) {
+    if (!(expandMirror && anim?.mirror)) {
+      return anim.directions.map(dir => ({
+        key: dir.key,
+        name: dir.name,
+        frames: dir.frames.map(frame => ({ frame, flip: false }))
+      }));
+    }
+
+    const fullDefs = getFullDirectionDefs(anim.directionCount);
+    const byKey = new Map(anim.directions.map(dir => [dir.key || directionKeyFromName(dir.name), dir]));
+    return fullDefs.map(def => {
+      const direct = byKey.get(def.key);
+      if (direct) {
+        return { key: def.key, name: def.name, frames: direct.frames.map(frame => ({ frame, flip: false })) };
+      }
+      const mirrorSourceKey = getMirrorSourceKey(def.key);
+      const mirrorSource = mirrorSourceKey ? byKey.get(mirrorSourceKey) : null;
+      if (mirrorSource) {
+        return { key: def.key, name: def.name, frames: mirrorSource.frames.map(frame => ({ frame, flip: true })) };
+      }
+      return { key: def.key, name: def.name, frames: [] };
+    });
+  }
+
+  function renderHome() {
+    cleanupUrls();
+    els.pageTitle.textContent = 'Sprite Forge';
+    els.pageSubtitle.textContent = state.online ? 'Biblioteca familiar' : 'Modo local';
+    els.backBtn.classList.add('hidden');
+    els.editorNav.classList.add('hidden');
+
+    const projectCards = state.projects.map(projectCardHtml).join('');
+    const connectionClass = state.online ? 'online' : (state.setupError ? 'error' : '');
+    const connectionText = state.online ? 'Supabase conectado' : 'Modo local';
+    els.main.innerHTML = `
+      <section class="section">
+        <div class="cloud-banner">
+          <div class="cloud-user">
+            <strong>${escapeHtml(state.authorName || 'Sin nombre')}</strong>
+            <small>${state.isAdmin ? 'Administrador familiar' : 'Autor de este dispositivo'}</small>
+          </div>
+          <span class="connection-pill ${connectionClass}">${connectionText}</span>
+        </div>
+        ${state.setupError ? `<div class="setup-note"><strong>Falta terminar Supabase.</strong><br>${escapeHtml(state.setupError)}<br><small>La app continúa en modo local. Ejecuta la migración incluida y despliega la función <code>generate-sprite</code>.</small></div>` : ''}
+        <div class="hero-card">
+          <h2>Sprites compartidos con la familia</h2>
+          <p>Cada dispositivo tiene su autor. Todos ven la biblioteca; el autor y los administradores pueden editar o eliminar.</p>
+          <button id="newProjectBtn" class="primary-btn">＋ Nuevo proyecto</button>
+        </div>
+        <div class="section-head">
+          <h2>Proyectos</h2>
+          <span class="chip">${state.projects.length}</span>
+        </div>
+        <div class="project-list">
+          ${projectCards || '<div class="empty-state">Todavía no hay proyectos.</div>'}
+        </div>
+      </section>`;
+
+    document.getElementById('newProjectBtn').addEventListener('click', async () => {
+      const project = createProject();
+      state.projects.unshift(project);
+      try {
+        await putProject(project);
+        openProject(project.id);
+      } catch (error) {
+        toast(`No se pudo crear: ${error.message || error}`);
+        renderHome();
+      }
+    });
+
+    els.main.querySelectorAll('[data-open-project]').forEach(btn => btn.addEventListener('click', () => openProject(btn.dataset.openProject)));
+    els.main.querySelectorAll('[data-duplicate-project]').forEach(btn => btn.addEventListener('click', () => duplicateProject(btn.dataset.duplicateProject)));
+    els.main.querySelectorAll('[data-delete-project]').forEach(btn => btn.addEventListener('click', () => confirmDeleteProject(btn.dataset.deleteProject)));
+  }
+
+  function projectCardHtml(project) {
+    const thumbAsset = getProjectThumbAsset(project);
+    const thumbSrc = assetSrc(thumbAsset) || (project.thumbnailPath ? publicAssetUrl(project.thumbnailPath) : '');
+    const thumb = thumbSrc ? `<img src="${escapeAttr(thumbSrc)}" alt="">` : 'Sin imagen';
+    const anim = project.animations?.find(a => a.id === project.activeAnimationId) || project.animations?.[0];
+    const frameTotal = anim ? anim.directions.reduce((n,d) => n + d.frames.length, 0) : 0;
+    const manageable = canManageProject(project);
+    return `
+      <article class="project-card ${manageable ? '' : 'readonly'}">
+        <button class="project-thumb" ${manageable ? `data-open-project="${project.id}"` : ''}>${thumb}</button>
+        <button class="project-info" ${manageable ? `data-open-project="${project.id}"` : ''} style="background:none;border:0;color:inherit;text-align:left;padding:0;" ${manageable ? '' : 'disabled'}>
+          <h3>${escapeHtml(project.name)}</h3>
+          <div class="meta-row">
+            <span class="chip">${escapeHtml(anim?.type || 'Sin animación')}</span>
+            <span class="chip">${directionChipText(anim)}</span>
+            <span class="chip">${frameTotal} huecos</span>
+            ${state.isAdmin && project.ownerId !== state.currentUser?.id ? '<span class="chip badge-admin">ADMIN</span>' : ''}
+          </div>
+          <div class="author-line">Por ${escapeHtml(project.author || 'Sin nombre')}${manageable ? ' · editable' : ' · solo lectura'}</div>
+        </button>
+        <div class="project-actions">
+          <button class="mini-btn" data-duplicate-project="${project.id}" title="Duplicar">⧉</button>
+          ${manageable ? `<button class="mini-btn" data-delete-project="${project.id}" title="Eliminar">🗑</button>` : ''}
+        </div>
+      </article>`;
+  }
+
+  function openProject(id) {
+    const project = state.projects.find(p => p.id === id);
+    if (!project) return;
+    if (!canManageProject(project)) return toast('Duplica el proyecto para trabajar sobre tu propia copia');
+    normalizeProject(project);
+    state.currentProject = project;
+    state.currentStep = 'base';
+    const anim = getActiveAnimation();
+    state.selectedDirection = anim?.directions?.[0]?.id || null;
+    renderEditor();
+  }
+
+  async function duplicateProject(id) {
+    const original = state.projects.find(p => p.id === id);
+    if (!original) return;
+    toast('Duplicando proyecto e imágenes…');
+    const clone = structuredClone(original);
+    clone.id = uid();
+    clone.ownerId = state.currentUser?.id || 'local';
+    clone.author = state.authorName || 'Sin nombre';
+    clone.cloudPersisted = false;
+    clone.thumbnailPath = '';
+    clone.name = `${original.name} copia`;
+    clone.createdAt = clone.updatedAt = Date.now();
+    remapProjectIds(clone);
+    await hydrateCloneAssets(original, clone);
+    state.projects.unshift(clone);
+    await putProject(clone);
+    toast('Proyecto duplicado');
+    renderHome();
+  }
+
+  async function hydrateCloneAssets(original, clone) {
+    for (let i = 0; i < clone.references.length; i++) {
+      const source = original.references[i];
+      clone.references[i].blob = await assetToBlob(source);
+      clone.references[i].imagePath = '';
+    }
+    for (let a = 0; a < clone.animations.length; a++) {
+      for (let d = 0; d < clone.animations[a].directions.length; d++) {
+        const sourceFrames = original.animations[a]?.directions[d]?.frames || [];
+        const targetFrames = clone.animations[a].directions[d].frames;
+        for (let f = 0; f < targetFrames.length; f++) {
+          targetFrames[f].blob = await assetToBlob(sourceFrames[f]);
+          targetFrames[f].imagePath = '';
+        }
+      }
+    }
+  }
+
+  function remapProjectIds(project) {
+    const animMap = new Map();
+    project.references.forEach(r => r.id = uid());
+    project.animations.forEach(a => {
+      const old = a.id;
+      a.id = uid();
+      animMap.set(old, a.id);
+      a.directions.forEach(d => {
+        d.id = uid();
+        d.frames.forEach(f => f.id = uid());
+      });
+    });
+    project.activeAnimationId = animMap.get(project.activeAnimationId) || project.animations[0]?.id;
+  }
+
+  function confirmDeleteProject(id) {
+    const project = state.projects.find(p => p.id === id);
+    if (!canManageProject(project)) return toast('No puedes eliminar este proyecto');
+    els.confirmTitle.textContent = 'Eliminar proyecto';
+    els.confirmText.textContent = `Se eliminará “${project?.name || ''}” y todas sus imágenes compartidas.`;
+    els.confirmOkBtn.onclick = async () => {
+      try {
+        await deleteProjectDb(id);
+        state.projects = state.projects.filter(p => p.id !== id);
+        toast('Proyecto eliminado');
+      } catch (error) {
+        toast(`No se pudo eliminar: ${error.message || error}`);
+      }
+      renderHome();
+    };
+    els.confirmDialog.showModal();
+  }
+
+  function renderEditor() {
+    cleanupUrls();
+    const p = state.currentProject;
+    if (!p) return renderHome();
+    els.pageTitle.textContent = p.name;
+    const saveLabel = state.online ? ({ pending: 'cambios pendientes', saving: 'guardando…', saved: 'guardado', error: 'error al guardar' }[state.saveStatus] || 'nube') : 'local';
+    els.pageSubtitle.textContent = `${stepLabel(state.currentStep)} · ${saveLabel}`;
+    els.backBtn.classList.remove('hidden');
+    els.editorNav.classList.remove('hidden');
+    els.editorNav.querySelectorAll('[data-step]').forEach(btn => btn.classList.toggle('active', btn.dataset.step === state.currentStep));
+
+    if (state.currentStep === 'base') renderBaseStep();
+    if (state.currentStep === 'config') renderConfigStep();
+    if (state.currentStep === 'frames') renderFramesStep();
+    if (state.currentStep === 'export') renderExportStep();
+  }
+
+  function renderBaseStep() {
+    const p = state.currentProject;
+    const refs = p.references.map(ref => `
+      <div class="ref-card">
+        <img src="${escapeAttr(assetSrc(ref))}" alt="${escapeHtml(ref.name || 'Referencia')}">
+        <button class="remove-ref" data-remove-ref="${ref.id}">✕</button>
+      </div>`).join('');
+
+    els.main.innerHTML = `
+      <section class="section">
+        <div class="card">
+          <label class="field"><span>Nombre del proyecto</span><input id="projectName" value="${escapeAttr(p.name)}"></label>
+          <label class="field"><span>Tipo de sprite</span>
+            <select id="projectCategory">
+              ${['Personaje','Enemigo','NPC','Objeto','Efecto'].map(v => `<option ${p.category===v?'selected':''}>${v}</option>`).join('')}
+            </select>
+          </label>
+        </div>
+        <div class="card">
+          <h3>Imágenes de referencia</h3>
+          <div class="ref-grid">
+            ${refs}
+            ${p.references.length < 4 ? '<button id="addReferenceBtn" class="ref-add">＋<br>Añadir referencia</button>' : ''}
+          </div>
+        </div>
+        <div class="card">
+          <label class="field"><span>Prompt base</span><textarea id="basePrompt">${escapeHtml(p.basePrompt)}</textarea></label>
+          <details style="margin-top:12px"><summary class="muted">Prompt negativo</summary>
+            <label class="field"><textarea id="negativePrompt">${escapeHtml(p.negativePrompt || '')}</textarea></label>
+          </details>
+        </div>
+        <button id="nextBaseBtn" class="primary-btn full">Continuar a configuración</button>
+      </section>`;
+
+    bindValue('projectName', value => { p.name = value || 'Sin nombre'; els.pageTitle.textContent = p.name; });
+    bindValue('projectCategory', value => p.category = value);
+    bindValue('basePrompt', value => p.basePrompt = value);
+    bindValue('negativePrompt', value => p.negativePrompt = value);
+    document.getElementById('addReferenceBtn')?.addEventListener('click', () => els.referenceInput.click());
+    els.main.querySelectorAll('[data-remove-ref]').forEach(btn => btn.addEventListener('click', async () => {
+      const ref = p.references.find(r => r.id === btn.dataset.removeRef);
+      await removeAsset(ref);
+      p.references = p.references.filter(r => r.id !== btn.dataset.removeRef);
+      scheduleSave(); renderEditor();
+    }));
+    document.getElementById('nextBaseBtn').addEventListener('click', () => { state.currentStep = 'config'; renderEditor(); });
+  }
+
+  function renderConfigStep() {
+    const p = state.currentProject;
+    const anim = getActiveAnimation();
+    const generatedDirectionCount = getDirectionDefs(anim.directionCount, !!anim.mirror).length;
+    els.main.innerHTML = `
+      <section class="section">
+        <div class="card">
+          <div class="section-head"><h3 style="margin:0">Animaciones</h3><button id="addAnimationBtn" class="mini-btn">＋</button></div>
+          <div class="segmented" style="margin-top:12px">
+            ${p.animations.map(a => `<button class="${a.id===anim.id?'active':''}" data-select-animation="${a.id}">${escapeHtml(a.name)}</button>`).join('')}
+          </div>
+        </div>
+        <div class="card">
+          <label class="field"><span>Nombre</span><input id="animationName" value="${escapeAttr(anim.name)}"></label>
+          <label class="field"><span>Tipo de animación</span>
+            <select id="animationType">
+              ${['Idle','Walk','Attack','Cast','Hurt','Death','Activate','Custom'].map(v => `<option ${anim.type===v?'selected':''}>${v}</option>`).join('')}
+            </select>
+          </label>
+          <div class="field" style="margin-top:12px"><span>Direcciones</span>
+            <div class="segmented" id="directionCountSeg">
+              ${[2,4,8].map(n => `<button data-dir-count="${n}" class="${anim.directionCount===n?'active':''}">${n}</button>`).join('')}
+            </div>
+          </div>
+          <label class="field" style="margin-top:12px"><span>Espejo horizontal</span>
+            <div style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:12px;background:#141313;">
+              <input id="mirrorMode" type="checkbox" ${anim.mirror ? 'checked' : ''} style="width:20px;height:20px;accent-color: var(--accent);margin-top:2px;">
+              <div>
+                <div style="font-weight:700">Activar espejo</div>
+                <div class="muted small" id="mirrorHint">${anim.mirror ? `Se generarán ${generatedDirectionCount} direcciones base. ${mirrorSummary(anim.directionCount)}` : 'Desactivado: se generarán todas las direcciones completas.'}</div>
+              </div>
+            </div>
+          </label>
+          <div class="field-grid" style="margin-top:12px">
+            <label class="field"><span>Frames iniciales por dirección</span><input id="initialFrameCount" type="number" min="1" max="24" value="${anim.initialFrameCount}"></label>
+            <label class="field"><span>Tamaño de frame</span>
+              <select id="frameSize"><option value="256" ${anim.width===256?'selected':''}>256 × 256</option><option value="512" ${anim.width===512?'selected':''}>512 × 512</option><option value="1024" ${anim.width===1024?'selected':''}>1024 × 1024</option></select>
+            </label>
+          </div>
+          <p class="muted small">El número inicial solo crea los huecos. Después puedes añadir, duplicar, borrar y reordenar libremente cada dirección.</p>
+        </div>
+        <div class="inline-actions">
+          <button id="deleteAnimationBtn" class="danger-btn">Eliminar animación</button>
+          <button id="goFramesBtn" class="primary-btn">Ir a frames</button>
+        </div>
+      </section>`;
+
+    bindValue('animationName', value => { anim.name = value || anim.type; });
+    bindValue('animationType', value => { anim.type = value; if (!anim.name || anim.name === 'Custom') anim.name = value; });
+    bindValue('initialFrameCount', value => { anim.initialFrameCount = clampInt(value, 1, 24, 6); });
+    bindValue('frameSize', value => { anim.width = anim.height = Number(value); });
+
+    els.main.querySelectorAll('[data-select-animation]').forEach(btn => btn.addEventListener('click', () => {
+      p.activeAnimationId = btn.dataset.selectAnimation;
+      state.selectedDirection = getActiveAnimation().directions[0]?.id;
+      scheduleSave(); renderEditor();
+    }));
+
+    document.getElementById('addAnimationBtn').addEventListener('click', () => {
+      const a = createAnimation('Idle', 2, 6);
+      p.animations.push(a); p.activeAnimationId = a.id; state.selectedDirection = a.directions[0].id;
+      scheduleSave(); renderEditor();
+    });
+
+    document.getElementById('mirrorMode').addEventListener('change', (event) => {
+      anim.mirror = !!event.target.checked;
+      syncAnimationDirections(anim);
+      scheduleSave(); renderEditor();
+    });
+
+    els.main.querySelectorAll('[data-dir-count]').forEach(btn => btn.addEventListener('click', () => changeDirectionCount(Number(btn.dataset.dirCount))));
+    document.getElementById('deleteAnimationBtn').addEventListener('click', () => deleteActiveAnimation());
+    document.getElementById('goFramesBtn').addEventListener('click', () => { state.currentStep = 'frames'; renderEditor(); });
+  }
+
+  function changeDirectionCount(count) {
+    const anim = getActiveAnimation();
+    if (anim.directionCount === count) return;
+    anim.directionCount = count;
+    syncAnimationDirections(anim);
+    scheduleSave(); renderEditor();
+  }
+
+  function deleteActiveAnimation() {
+    const p = state.currentProject;
+    if (p.animations.length === 1) return toast('Debe quedar al menos una animación');
+    const current = getActiveAnimation();
+    els.confirmTitle.textContent = 'Eliminar animación';
+    els.confirmText.textContent = `Se eliminará “${current.name}”.`;
+    els.confirmOkBtn.onclick = () => {
+      p.animations = p.animations.filter(a => a.id !== current.id);
+      p.activeAnimationId = p.animations[0].id;
+      state.selectedDirection = p.animations[0].directions[0]?.id;
+      scheduleSave(); renderEditor();
+    };
+    els.confirmDialog.showModal();
+  }
+
+  function renderFramesStep() {
+    const anim = getActiveAnimation();
+    if (!state.selectedDirection || !anim.directions.some(d => d.id === state.selectedDirection)) state.selectedDirection = anim.directions[0]?.id;
+    const dir = getSelectedDirection();
+    const tabs = anim.directions.map(d => `<button data-dir="${d.id}" class="${d.id===dir.id?'active':''}">${escapeHtml(d.name)} · ${d.frames.length}</button>`).join('');
+    const frames = dir.frames.map((frame, index) => frameCardHtml(frame, index, isPreviewFlipped(dir.id))).join('');
+    const generatedDirectionCount = anim.directions.length;
+    const directionMeta = anim.mirror ? `${generatedDirectionCount}/${anim.directionCount} direcciones · espejo` : `${anim.directionCount} direcciones · orden libre`;
+
+    els.main.innerHTML = `
+      <section class="section">
+        <div class="card">
+          <div class="section-head"><div><h3 style="margin:0">${escapeHtml(anim.name)}</h3><p class="muted small" style="margin:4px 0 0">${directionMeta}</p></div><button id="generateAllBtn" class="primary-btn">Generar todo</button></div>
+          <p class="muted small" style="margin:10px 0 0">Motor: ${state.settings.demoMode || !state.online ? 'demostración local' : 'Cloudflare FLUX mediante Supabase'}</p>
+        </div>
+        <div class="direction-tabs">${tabs}</div>
+        <div class="frame-toolbar">
+          <button id="addFrameBtn" class="mini-btn" title="Añadir hueco">＋</button>
+          <input id="slotCountInput" class="slot-count-input" type="number" min="1" max="48" value="${dir.frames.length}" aria-label="Número de huecos">
+          <button id="applySlotCountBtn" class="secondary-btn">Ajustar huecos</button>
+          <button id="generateMissingBtn" class="mini-btn" title="Generar vacíos">⚡</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;">
+          <button id="duplicateDirectionBtn" class="secondary-btn">Duplicar dir.</button>
+          <button id="flipPreviewBtn" class="secondary-btn">${isPreviewFlipped(dir.id) ? 'Quitar espejo' : 'Ver espejo'}</button>
+          <button id="goExportBtn" class="secondary-btn">Ir a exportar</button>
+        </div>
+        <div id="frameList" class="frame-list">${frames || '<div class="empty-state">No hay frames. Añade un hueco.</div>'}</div>
+      </section>`;
+
+    els.main.querySelectorAll('[data-dir]').forEach(btn => btn.addEventListener('click', () => { state.selectedDirection = btn.dataset.dir; renderEditor(); }));
+    document.getElementById('addFrameBtn').addEventListener('click', () => { dir.frames.push(createFrame(dir.frames.length + 1)); renumberFrames(dir); scheduleSave(); renderEditor(); });
+    document.getElementById('applySlotCountBtn').addEventListener('click', () => {
+      const wanted = clampInt(document.getElementById('slotCountInput').value, 1, 48, dir.frames.length || 1);
+      while (dir.frames.length < wanted) dir.frames.push(createFrame(dir.frames.length + 1));
+      if (dir.frames.length > wanted) dir.frames.splice(wanted);
+      renumberFrames(dir); scheduleSave(); renderEditor();
+    });
+    document.getElementById('generateAllBtn').addEventListener('click', () => generateAnimation(false));
+    document.getElementById('generateMissingBtn').addEventListener('click', () => generateDirectionMissing(dir));
+    document.getElementById('duplicateDirectionBtn').addEventListener('click', duplicateSelectedDirectionToTarget);
+    document.getElementById('flipPreviewBtn').addEventListener('click', () => { toggleDirectionPreviewFlip(dir.id); renderEditor(); });
+    document.getElementById('goExportBtn').addEventListener('click', () => { state.currentStep = 'export'; renderEditor(); });
+
+    bindFrameActions();
+    bindPointerReorder();
+  }
+
+  function frameCardHtml(frame, index, flipped = false) {
+    const src = assetSrc(frame);
+    const image = src ? `<img src="${escapeAttr(src)}" alt="${escapeHtml(frame.label)}" style="transform:${flipped ? 'scaleX(-1)' : 'none'};">` : `${index + 1}`;
+    return `
+      <article class="frame-card" data-frame-id="${frame.id}">
+        <div class="drag-handle" title="Arrastrar">⋮⋮</div>
+        <button class="frame-preview" data-upload-frame="${frame.id}">${image}</button>
+        <div class="frame-body">
+          <div class="frame-title"><strong>${escapeHtml(frame.label)}</strong><span class="frame-status ${frame.status}">${statusLabel(frame.status)}</span></div>
+          <div class="frame-actions">
+            <button class="mini-btn" data-move-left="${frame.id}" title="Mover antes">←</button>
+            <button class="mini-btn" data-move-right="${frame.id}" title="Mover después">→</button>
+            <button class="mini-btn" data-duplicate-frame="${frame.id}" title="Duplicar">⧉</button>
+            <button class="mini-btn" data-generate-frame="${frame.id}" title="Regenerar">↻</button>
+            <button class="mini-btn" data-delete-frame="${frame.id}" title="Eliminar">🗑</button>
+          </div>
+        </div>
+      </article>`;
+  }
+
+  function bindFrameActions() {
+    els.main.querySelectorAll('[data-upload-frame]').forEach(btn => btn.addEventListener('click', () => {
+      state.pendingFrameUploadId = btn.dataset.uploadFrame;
+      els.frameInput.click();
+    }));
+    els.main.querySelectorAll('[data-move-left]').forEach(btn => btn.addEventListener('click', () => moveFrame(btn.dataset.moveLeft, -1)));
+    els.main.querySelectorAll('[data-move-right]').forEach(btn => btn.addEventListener('click', () => moveFrame(btn.dataset.moveRight, 1)));
+    els.main.querySelectorAll('[data-duplicate-frame]').forEach(btn => btn.addEventListener('click', () => duplicateFrame(btn.dataset.duplicateFrame)));
+    els.main.querySelectorAll('[data-generate-frame]').forEach(btn => btn.addEventListener('click', () => generateFrameById(btn.dataset.generateFrame)));
+    els.main.querySelectorAll('[data-delete-frame]').forEach(btn => btn.addEventListener('click', () => deleteFrame(btn.dataset.deleteFrame)));
+  }
+
+  function moveFrame(id, delta) {
+    const dir = getSelectedDirection();
+    const index = dir.frames.findIndex(f => f.id === id);
+    const next = index + delta;
+    if (index < 0 || next < 0 || next >= dir.frames.length) return;
+    [dir.frames[index], dir.frames[next]] = [dir.frames[next], dir.frames[index]];
+    renumberFrames(dir); scheduleSave(); renderEditor();
+  }
+
+  function duplicateFrame(id) {
+    const dir = getSelectedDirection();
+    const index = dir.frames.findIndex(f => f.id === id);
+    if (index < 0) return;
+    const copy = structuredClone(dir.frames[index]);
+    copy.id = uid(); copy.label = 'Frame'; copy.createdAt = copy.updatedAt = Date.now();
+    dir.frames.splice(index + 1, 0, copy);
+    renumberFrames(dir); scheduleSave(); renderEditor();
+  }
+
+  function deleteFrame(id) {
+    const dir = getSelectedDirection();
+    dir.frames = dir.frames.filter(f => f.id !== id);
+    renumberFrames(dir); scheduleSave(); renderEditor();
+  }
+
+  function renumberFrames(dir) {
+    dir.frames.forEach((f, i) => f.label = `Frame ${i + 1}`);
+  }
+
+  function bindPointerReorder() {
+    const list = document.getElementById('frameList');
+    if (!list) return;
+    list.querySelectorAll('.drag-handle').forEach(handle => {
+      handle.addEventListener('pointerdown', (event) => {
+        const card = handle.closest('.frame-card');
+        if (!card) return;
+        event.preventDefault();
+        handle.setPointerCapture?.(event.pointerId);
+        state.drag = { id: card.dataset.frameId, pointerId: event.pointerId };
+        card.classList.add('dragging');
+      });
+      handle.addEventListener('pointermove', (event) => {
+        if (!state.drag || state.drag.pointerId !== event.pointerId) return;
+        const target = document.elementFromPoint(event.clientX, event.clientY)?.closest('.frame-card');
+        if (!target || target.dataset.frameId === state.drag.id) return;
+        const dir = getSelectedDirection();
+        const from = dir.frames.findIndex(f => f.id === state.drag.id);
+        const to = dir.frames.findIndex(f => f.id === target.dataset.frameId);
+        if (from < 0 || to < 0) return;
+        const [moved] = dir.frames.splice(from, 1);
+        dir.frames.splice(to, 0, moved);
+        renumberFrames(dir);
+        const movingEl = list.querySelector(`[data-frame-id="${state.drag.id}"]`);
+        if (from < to) target.after(movingEl); else target.before(movingEl);
+      });
+      const end = (event) => {
+        if (!state.drag || state.drag.pointerId !== event.pointerId) return;
+        list.querySelectorAll('.dragging').forEach(el => el.classList.remove('dragging'));
+        state.drag = null;
+        scheduleSave();
+        renderEditor();
+      };
+      handle.addEventListener('pointerup', end);
+      handle.addEventListener('pointercancel', end);
+    });
+  }
+
+  async function generateAnimation(onlyMissing) {
+    const anim = getActiveAnimation();
+    for (const dir of anim.directions) {
+      for (const frame of dir.frames) {
+        if (onlyMissing && assetHasImage(frame)) continue;
+        await generateFrame(frame, dir, anim);
+      }
+    }
+    scheduleSave(); renderEditor();
+  }
+
+  async function generateDirectionMissing(dir) {
+    const anim = getActiveAnimation();
+    for (const frame of dir.frames) if (!assetHasImage(frame)) await generateFrame(frame, dir, anim);
+    scheduleSave(); renderEditor();
+  }
+
+  async function generateFrameById(id) {
+    const anim = getActiveAnimation();
+    const dir = getSelectedDirection();
+    const frame = dir.frames.find(f => f.id === id);
+    if (!frame) return;
+    frame.status = 'loading'; renderEditor();
+    await generateFrame(frame, dir, anim);
+    scheduleSave(); renderEditor();
+  }
+
+  async function generateFrame(frame, dir, anim) {
+    frame.status = 'loading';
+    renderEditor();
+    try {
+      if (state.settings.demoMode || !state.online || !sb) {
+        frame.blob = await makeDemoFrame(anim.width, anim.height, dir.name, dir.frames.indexOf(frame) + 1, anim.type);
+      } else {
+        await persistProjectAssets(state.currentProject);
+        const referenceUrls = (state.currentProject.references || [])
+          .map(asset => asset.imagePath ? publicAssetUrl(asset.imagePath) : '')
+          .filter(Boolean)
+          .slice(0, 4);
+        const payload = {
+          projectId: state.currentProject.id,
+          animation: anim.type,
+          direction: dir.name,
+          directionKey: dir.key,
+          logicalDirectionCount: anim.directionCount,
+          generatedDirectionCount: anim.directions.length,
+          mirror: !!anim.mirror,
+          frameIndex: dir.frames.indexOf(frame),
+          frameCount: dir.frames.length,
+          width: anim.width,
+          height: anim.height,
+          seed: frame.seed || null,
+          prompt: buildFramePrompt(frame, dir, anim),
+          referenceUrls
+        };
+        const { data, error } = await sb.functions.invoke(CONFIG.generationFunction, { body: payload });
+        if (error) {
+          let detail = error.message || 'La función de generación falló';
+          try {
+            const responseBody = await error.context?.clone?.().json();
+            if (responseBody?.error) detail = responseBody.error;
+          } catch {}
+          throw new Error(detail);
+        }
+        if (!data?.imageBase64) throw new Error(data?.error || 'La función no devolvió una imagen');
+        frame.blob = base64ToBlob(data.imageBase64, data.mimeType || 'image/png');
+        if (data.seed != null) frame.seed = data.seed;
+        if (data.remainingEstimatedNeurons != null) toast(`Generado · cuota estimada restante: ${data.remainingEstimatedNeurons}`);
+      }
+      frame.imagePath = '';
+      frame.status = 'ready';
+      frame.updatedAt = Date.now();
+    } catch (error) {
+      console.error(error);
+      frame.status = 'error';
+      toast(`No se pudo generar ${frame.label}: ${error.message || error}`);
+    }
+  }
+
+  function buildFramePrompt(frame, dir, anim) {
+    const base = state.currentProject.basePrompt;
+    const movement = frame.prompt || `Animación ${anim.type}, dirección ${dir.name}, frame ${dir.frames.indexOf(frame)+1} de ${dir.frames.length}.`;
+    const mirrorNote = anim.mirror ? 'Modo espejo activo. Solo generar las direcciones base necesarias; las direcciones opuestas se cubrirán con flip horizontal.' : '';
+    const negative = state.currentProject.negativePrompt ? `Evitar estrictamente: ${state.currentProject.negativePrompt}.` : '';
+    const referenceNote = state.currentProject.references?.length ? 'Usa las imágenes de referencia adjuntas para conservar exactamente el personaje, vestimenta, proporciones, cámara y estilo.' : '';
+    return `${base}
+${movement}
+${referenceNote}
+${mirrorNote}
+${negative}
+Mantener exactamente el mismo personaje, escala, encuadre, iluminación y paleta. Fondo magenta chroma puro #FF00FF, sin degradado hacia el fondo.`;
+  }
+
+  async function makeDemoFrame(width, height, direction, index, type) {
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.min(width, 512); canvas.height = Math.min(height, 512);
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ff00ff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    const cx = canvas.width/2;
+    const y = canvas.height*.66;
+    const bob = Math.sin((index-1)/6*Math.PI*2)*canvas.height*.025;
+    ctx.fillStyle = '#2a2430';
+    ctx.beginPath(); ctx.ellipse(cx, y+bob, canvas.width*.12, canvas.height*.22, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#b89a61';
+    ctx.beginPath(); ctx.arc(cx, y-canvas.height*.22+bob, canvas.width*.075, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#ded1b8'; ctx.lineWidth = Math.max(2, canvas.width*.012);
+    ctx.beginPath();
+    const phase = Math.sin((index-1)/6*Math.PI*2);
+    ctx.moveTo(cx-canvas.width*.04, y-canvas.height*.02+bob); ctx.lineTo(cx-canvas.width*.15, y+canvas.height*(.12*phase)+bob);
+    ctx.moveTo(cx+canvas.width*.04, y-canvas.height*.02+bob); ctx.lineTo(cx+canvas.width*.15, y-canvas.height*(.12*phase)+bob);
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(0,0,0,.72)'; ctx.fillRect(10,10,canvas.width-20,44);
+    ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.max(14,canvas.width*.035)}px sans-serif`; ctx.textAlign = 'center';
+    ctx.fillText(`${type} · ${direction} · ${index}`, cx, 39);
+    return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+  }
+
+  function renderExportStep() {
+    const anim = getActiveAnimation();
+    const total = anim.directions.reduce((n,d) => n+d.frames.length,0);
+    const ready = anim.directions.reduce((n,d) => n+d.frames.filter(assetHasImage).length,0);
+    const logicalDirections = anim.mirror ? anim.directionCount : anim.directions.length;
+    els.main.innerHTML = `
+      <section class="section">
+        <div class="card">
+          <div class="stats-grid">
+            <div class="stat"><strong>${anim.directions.length}${anim.mirror ? `/${logicalDirections}` : ''}</strong><span>direcciones</span></div>
+            <div class="stat"><strong>${total}</strong><span>huecos</span></div>
+            <div class="stat"><strong>${ready}</strong><span>con imagen</span></div>
+          </div>
+        </div>
+        <div class="card export-grid">
+          <label class="field"><span>Orden de exportación</span>
+            <select id="exportOrder"><option value="rows">Una fila por dirección</option><option value="flat">Todos seguidos</option></select>
+          </label>
+          ${anim.mirror ? `<label class="field"><span>Exportación espejo</span>
+            <div style="display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px solid var(--line);border-radius:12px;background:#141313;">
+              <input id="expandMirrorExport" type="checkbox" checked style="width:20px;height:20px;accent-color: var(--accent);margin-top:2px;">
+              <div><div style="font-weight:700">Expandir direcciones espejadas</div><div class="muted small">Al exportar, se crearán también las direcciones opuestas aplicando flip horizontal.</div></div>
+            </div>
+          </label>` : ''}
+          <label class="field"><span>Espaciado entre frames (px)</span><input id="exportGap" type="number" min="0" max="64" value="0"></label>
+          <button id="previewSheetBtn" class="secondary-btn">Crear vista previa</button>
+          <button id="downloadSheetBtn" class="primary-btn">Descargar spritesheet PNG</button>
+        </div>
+        <div id="sheetPreview" class="canvas-wrap"><p class="muted small">La vista previa aparecerá aquí.</p></div>
+      </section>`;
+
+    document.getElementById('previewSheetBtn').addEventListener('click', previewSpritesheet);
+    document.getElementById('downloadSheetBtn').addEventListener('click', downloadSpritesheet);
+  }
+
+  async function previewSpritesheet() {
+    const canvas = await buildSpritesheetCanvas();
+    const wrap = document.getElementById('sheetPreview');
+    wrap.innerHTML = ''; wrap.appendChild(canvas);
+  }
+
+  async function downloadSpritesheet() {
+    const canvas = await buildSpritesheetCanvas();
+    canvas.toBlob(blob => {
+      if (!blob) return;
+      downloadBlob(blob, `${slugify(state.currentProject.name)}_${slugify(getActiveAnimation().name)}.png`);
+    }, 'image/png');
+  }
+
+  async function buildSpritesheetCanvas() {
+    const anim = getActiveAnimation();
+    const order = document.getElementById('exportOrder')?.value || 'rows';
+    const gap = clampInt(document.getElementById('exportGap')?.value, 0, 64, 0);
+    const expandMirror = !!document.getElementById('expandMirrorExport')?.checked;
+    const exportDirections = getExportDirections(anim, expandMirror);
+    const frameW = anim.width, frameH = anim.height;
+    let cols, rows, flatFrames;
+    if (order === 'rows') {
+      cols = Math.max(...exportDirections.map(d => d.frames.length), 1);
+      rows = exportDirections.length;
+      flatFrames = exportDirections.flatMap((d, row) => d.frames.map((entry, col) => ({ ...entry, row, col })));
+    } else {
+      const frames = exportDirections.flatMap(d => d.frames);
+      cols = Math.ceil(Math.sqrt(frames.length || 1));
+      rows = Math.ceil((frames.length || 1)/cols);
+      flatFrames = frames.map((entry, i) => ({ ...entry, row: Math.floor(i/cols), col: i%cols }));
+    }
+    const canvas = document.createElement('canvas');
+    canvas.width = cols*frameW + Math.max(0,cols-1)*gap;
+    canvas.height = rows*frameH + Math.max(0,rows-1)*gap;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = anim.background || '#ff00ff'; ctx.fillRect(0,0,canvas.width,canvas.height);
+    for (const {frame, flip, row, col} of flatFrames) {
+      if (!assetHasImage(frame)) continue;
+      const blob = await assetToBlob(frame);
+      if (!blob) continue;
+      const img = await blobToImage(blob);
+      const x = col*(frameW+gap);
+      const y = row*(frameH+gap);
+      if (flip) {
+        ctx.save();
+        ctx.translate(x + frameW, y);
+        ctx.scale(-1, 1);
+        ctx.drawImage(img, 0, 0, frameW, frameH);
+        ctx.restore();
+      } else {
+        ctx.drawImage(img, x, y, frameW, frameH);
+      }
+    }
+    return canvas;
+  }
+
+  function bindValue(id, setter) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => { setter(el.value); scheduleSave(); });
+    el.addEventListener('change', () => { setter(el.value); scheduleSave(); });
+  }
+
+  function getActiveAnimation() {
+    const p = state.currentProject;
+    return p.animations.find(a => a.id === p.activeAnimationId) || p.animations[0];
+  }
+
+  function getSelectedDirection() {
+    const anim = getActiveAnimation();
+    return anim.directions.find(d => d.id === state.selectedDirection) || anim.directions[0];
+  }
+
+  function findFrameById(id) {
+    const anim = getActiveAnimation();
+    for (const dir of anim.directions) {
+      const frame = dir.frames.find(f => f.id === id);
+      if (frame) return frame;
+    }
+    return null;
+  }
+
+  function getProjectThumbAsset(project) {
+    for (const anim of project.animations || []) for (const dir of anim.directions || []) for (const frame of dir.frames || []) if (assetHasImage(frame)) return frame;
+    return (project.references || []).find(assetHasImage) || null;
+  }
+
+  function scheduleSave() {
+    if (!state.currentProject || !canManageProject(state.currentProject)) return;
+    state.saveStatus = 'pending';
+    clearTimeout(autosaveTimer);
+    autosaveTimer = setTimeout(saveCurrentNow, 700);
+  }
+
+  async function saveCurrentNow() {
+    if (!state.currentProject || !canManageProject(state.currentProject)) return;
+    if (state.syncing) {
+      state.saveQueued = true;
+      return;
+    }
+    state.syncing = true;
+    state.saveStatus = 'saving';
+    const project = state.currentProject;
+    try {
+      project.updatedAt = Date.now();
+      project.author = state.authorName || project.author;
+      await putProject(project);
+      const index = state.projects.findIndex(p => p.id === project.id);
+      if (index >= 0) state.projects[index] = project;
+      state.saveStatus = 'saved';
+    } catch (error) {
+      console.error(error);
+      state.saveStatus = 'error';
+      toast(`No se pudo guardar: ${error.message || error}`);
+    } finally {
+      state.syncing = false;
+      if (state.saveQueued) {
+        state.saveQueued = false;
+        setTimeout(saveCurrentNow, 50);
+      }
+    }
+  }
+
+  function assetHasImage(asset) {
+    return Boolean(asset && (asset.blob || asset.imagePath));
+  }
+
+  function assetSrc(asset) {
+    if (!asset) return '';
+    if (asset.blob instanceof Blob) return objectUrl(asset.blob);
+    return asset.imagePath ? publicAssetUrl(asset.imagePath) : '';
+  }
+
+  async function assetToBlob(asset) {
+    if (!asset) return null;
+    if (asset.blob instanceof Blob) return asset.blob;
+    const url = asset.imagePath ? publicAssetUrl(asset.imagePath) : '';
+    if (!url) return null;
+    const response = await fetch(url, { cache: 'no-store' });
+    if (!response.ok) throw new Error(`No se pudo descargar una imagen (${response.status})`);
+    return response.blob();
+  }
+
+  async function resizeImageBlob(file, maxWidth = 480, maxHeight = 480) {
+    const image = await blobToImage(file);
+    const scale = Math.min(1, maxWidth / image.naturalWidth, maxHeight / image.naturalHeight);
+    if (scale >= 1 && file.type === 'image/png') return file;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return new Promise((resolve, reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('No se pudo preparar la referencia')), 'image/png'));
+  }
+
+  function mimeExtension(type = 'image/png') {
+    if (type.includes('jpeg')) return 'jpg';
+    if (type.includes('webp')) return 'webp';
+    if (type.includes('gif')) return 'gif';
+    return 'png';
+  }
+
+  function objectUrl(blob) {
+    const url = URL.createObjectURL(blob);
+    state.urls.add(url);
+    return url;
+  }
+
+  function cleanupUrls() {
+    for (const url of state.urls) URL.revokeObjectURL(url);
+    state.urls.clear();
+  }
+
+  function statusLabel(status) {
+    return ({ empty:'vacío', loading:'generando', ready:'listo', error:'error' })[status] || status;
+  }
+
+  function stepLabel(step) {
+    return ({ base:'Base y referencias', config:'Configuración', frames:'Frames', export:'Exportar' })[step] || '';
+  }
+
+  function uid() {
+    if (crypto.randomUUID) return crypto.randomUUID();
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, char => {
+      const random = Math.random() * 16 | 0;
+      const value = char === 'x' ? random : (random & 0x3 | 0x8);
+      return value.toString(16);
+    });
+  }
+  function clampInt(value, min, max, fallback) { const n = Number.parseInt(value,10); return Number.isFinite(n) ? Math.min(max,Math.max(min,n)) : fallback; }
+  function escapeHtml(value='') { return String(value).replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c])); }
+  function escapeAttr(value='') { return escapeHtml(value); }
+  function slugify(value='sprite') { return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'') || 'sprite'; }
+
+  function blobToImage(blob) {
+    return new Promise((resolve, reject) => {
+      const img = new Image(); const url = URL.createObjectURL(blob);
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Imagen inválida')); };
+      img.src = url;
+    });
+  }
+
+  function base64ToBlob(base64, mime='image/png') {
+    const clean = base64.includes(',') ? base64.split(',')[1] : base64;
+    const bytes = atob(clean); const arr = new Uint8Array(bytes.length);
+    for (let i=0;i<bytes.length;i++) arr[i] = bytes.charCodeAt(i);
+    return new Blob([arr], { type: mime });
+  }
+
+  function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  }
+
+  function toast(message) {
+    document.querySelectorAll('.toast').forEach(t => t.remove());
+    const el = document.createElement('div'); el.className = 'toast'; el.textContent = message;
+    document.body.appendChild(el); setTimeout(() => el.remove(), 2200);
+  }
+})();
+
+  </script>
+</body>
+</html>

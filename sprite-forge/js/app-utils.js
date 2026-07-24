@@ -57,7 +57,7 @@ function bindValue(id, setter) {
     } catch (error) {
       console.error(error);
       state.saveStatus = 'error';
-      toast(`No se pudo guardar: ${error.message || error}`);
+      toast(error.message || 'No se pudo guardar el proyecto');
     } finally {
       state.syncing = false;
       if (state.saveQueued) {
@@ -123,7 +123,7 @@ function bindValue(id, setter) {
   }
 
   function stepLabel(step) {
-    return ({ base:'Base y referencias', config:'Configuración', frames:'Frames', export:'Exportar' })[step] || '';
+    return ({ base:'Referencia', generate:'Generar', cutter:'Editor Cutter', frames:'Timeline', export:'Exportar' })[step] || '';
   }
 
   function uid() {
