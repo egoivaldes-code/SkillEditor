@@ -10,7 +10,7 @@ const previewState = {
   loop: true,
   onionSkin: false,
   frameIndex: 0,
-  timer: null
+  timer: null,
 };
 
 // Persistent state for the adjust-offset drag modal
@@ -98,7 +98,7 @@ function renderFramesStep() {
       <div id="previewPlayerSection" style="display:none">
         <div class="card" style="gap:10px">
           <div class="section-head"><strong>Vista previa</strong><button id="closePreviewBtn" class="mini-btn">✕</button></div>
-          <canvas id="previewCanvas" style="max-width:100%;border-radius:10px;background:#ff00ff;image-rendering:pixelated;display:block;margin:0 auto"></canvas>
+          <canvas id="previewCanvas" style="max-width:100%;border-radius:10px;background:#ff00ff;image-rendering:pixelated;display:block;margin:0 auto;touch-action:none"></canvas>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center">
             <button id="previewPlayBtn" class="secondary-btn" style="min-height:38px">▶ Play</button>
             <button id="previewPauseBtn" class="secondary-btn" style="min-height:38px">⏸ Pausa</button>
@@ -106,6 +106,11 @@ function renderFramesStep() {
               ${[4, 6, 8, 10, 12].map(f => `<option value="${f}" ${previewState.fps === f ? 'selected' : ''}>${f}</option>`).join('')}
             </select></label>
             <label class="muted small"><input type="checkbox" id="previewLoopCheck" ${previewState.loop ? 'checked' : ''}> Loop</label>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:center;border-top:1px solid var(--line);padding-top:8px">
+            <button id="prevAdjFrameBtn" class="mini-btn" title="Frame anterior">◀</button>
+            <span id="adjustFrameLabel" class="muted small" style="min-width:80px;text-align:center">Frame —</span>
+            <button id="nextAdjFrameBtn" class="mini-btn" title="Frame siguiente">▶</button>
           </div>
         </div>
       </div>
@@ -192,6 +197,22 @@ function renderFramesStep() {
   });
   document.getElementById('previewLoopCheck').addEventListener('change', e => { previewState.loop = e.target.checked; });
 
+  // Frame-step buttons — pause and show the adjacent frame
+  document.getElementById('prevAdjFrameBtn').addEventListener('click', () => {
+    const frames = getSelectedDirection().frames.filter(assetHasImage);
+    if (!frames.length) return;
+    pausePreview();
+    previewState.frameIndex = (previewState.frameIndex - 1 + frames.length) % frames.length;
+    renderPreviewFrame();
+  });
+  document.getElementById('nextAdjFrameBtn').addEventListener('click', () => {
+    const frames = getSelectedDirection().frames.filter(assetHasImage);
+    if (!frames.length) return;
+    pausePreview();
+    previewState.frameIndex = (previewState.frameIndex + 1) % frames.length;
+    renderPreviewFrame();
+  });
+
   bindFrameActions();
   bindPointerReorder();
 }
@@ -210,7 +231,10 @@ function frameCardHtml(frame, index, flipped = false) {
   const anchorBadge = frame.isAnchor ? '<span style="color:var(--accent);font-size:.68rem"> ⚓</span>' : '';
   const approvedBadge = frame.approved ? '<span style="color:var(--success);font-size:.68rem"> ✓</span>' : '';
   const seedTip = frame.seed != null ? ` 🎲${frame.seed}` : '';
-  const alignTip = frame.autoAligned ? ` Δ(${frame.offsetX},${frame.offsetY})` : '';
+  const hasOffset = frame.offsetX || frame.offsetY || (frame.scale && frame.scale !== 1);
+  const alignTip = (frame.autoAligned || hasOffset)
+    ? ` Δ(${frame.offsetX || 0},${frame.offsetY || 0})${frame.scale && frame.scale !== 1 ? ` ×${frame.scale}` : ''}`
+    : '';
 
   return `
     <article class="frame-card" data-frame-id="${frame.id}">
@@ -667,6 +691,32 @@ async function renderPreviewFrame() {
       ctx.restore();
     }
   } catch {}
+
+  updatePreviewFrameLabel(visibleFrames, previewState.frameIndex % visibleFrames.length);
+}
+
+/**
+ * Apply offsetX/offsetY/scale transform for a frame onto a canvas context.
+ * Must be called inside ctx.save()/ctx.restore().
+ * Uses center-pivot: translate to (cw/2+ox, ch/2+oy) then scale.
+ * Caller must draw the image at (-cw/2, -ch/2, cw, ch).
+ */
+function applyFrameTransformSized(ctx, frame, cw, ch, flipped) {
+  const ox = frame.offsetX || 0;
+  const oy = frame.offsetY || 0;
+  const s  = frame.scale ?? 1;
+  ctx.translate(cw / 2 + ox, ch / 2 + oy);
+  ctx.scale(flipped ? -s : s, s);
+}
+
+// ---------------------------------------------------------------------------
+// Preview frame label
+// ---------------------------------------------------------------------------
+
+function updatePreviewFrameLabel(frames, idx) {
+  const el = document.getElementById('adjustFrameLabel');
+  if (!el) return;
+  el.textContent = frames.length ? `Frame ${idx + 1}/${frames.length}` : '—';
 }
 
 // ---------------------------------------------------------------------------

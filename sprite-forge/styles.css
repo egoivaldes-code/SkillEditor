@@ -152,6 +152,8 @@ img { display: block; max-width: 100%; }
 
 .warning-note{margin:12px 0;padding:10px 12px;border:1px solid rgba(255,190,70,.45);border-radius:12px;background:rgba(255,190,70,.10);color:#f5d38b;font-size:.88rem;line-height:1.35}
 
+
+
 /* Cloud/collaboration additions */
 .connection-pill { display:inline-flex; align-items:center; gap:7px; min-height:30px; padding:0 10px; border:1px solid var(--line); border-radius:999px; color:var(--muted); background:#171414; font-size:.75rem; }
 .connection-pill::before { content:""; width:8px; height:8px; border-radius:50%; background:#8b7777; }
