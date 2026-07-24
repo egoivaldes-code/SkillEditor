@@ -468,11 +468,17 @@ function syncAnimationDirections(anim) {
       renumberFrames(existing);
       return existing;
     }
+    const directionSeed = randomSeed();
     return {
       id: uid(),
       key: def.key,
       name: def.name,
-      frames: Array.from({ length: anim.initialFrameCount }, (_, i) => createFrame(i + 1))
+      directionSeed,
+      frames: Array.from({ length: anim.initialFrameCount }, (_, i) => {
+        const f = createFrame(i + 1);
+        f.seed = directionSeed + i;
+        return f;
+      })
     };
   });
   state.selectedDirection = anim.directions[0]?.id || null;

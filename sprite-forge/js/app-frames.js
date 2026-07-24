@@ -708,8 +708,9 @@ async function generateIntermediates() {
     if (endIdx > startIdx) {
       for (let i = startIdx + 1; i < endIdx; i++) intermediateIndices.push(i);
     } else {
-      // Cyclic wrap: startIdx+1 to end of array
+      // Cyclic wrap: startIdx+1 to end of array, then 0 to endIdx-1
       for (let i = startIdx + 1; i < frames.length; i++) intermediateIndices.push(i);
+      for (let i = 0; i < endIdx; i++) intermediateIndices.push(i);
     }
 
     if (!intermediateIndices.length) continue;
