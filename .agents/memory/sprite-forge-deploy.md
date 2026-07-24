@@ -1,34 +1,27 @@
 ---
 name: Sprite Forge GitHub deploy
-description: Estado y contexto del PR de CRIPTA Sprite Forge en egoivaldes-code/SkillEditor
+description: Deployment context for Sprite Forge — post-merge steps and known gotchas
 ---
 
-**PR:** https://github.com/egoivaldes-code/SkillEditor/pull/1  
-**Rama:** feature/sprite-forge-cloud → main  
-**URL pública post-merge:** https://egoivaldes-code.github.io/SkillEditor/sprite-forge/  
-**Repo:** egoivaldes-code/SkillEditor (GitHub, conectado vía Replit integration)
+## Post-merge steps the user must run manually
 
-## Contenido del PR
+1. SQL: run `supabase/migrations/20260724_sprite_forge.sql` in the Supabase Dashboard.
+2. Auth: enable *Anonymous Sign-ins* in Supabase Auth → Providers.
+3. Edge Function: deploy `generate-sprite` (Deno) from the Supabase Dashboard or CLI.
+4. Cloudflare secrets on the Edge Function: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, and optionally `CLOUDFLARE_IMAGE_MODEL`.
+5. GitHub Pages publishes `/sprite-forge/` automatically — no reconfiguration needed.
+6. Make yourself admin: insert your user UUID into `sprite_admins`.
 
-- Toda la app está en `sprite-forge/` — sin tocar la raíz (SkillEditor existente).
-- 21 archivos nuevos (HTML, CSS, JS modular, SW, manifest, SQL, Edge Function Deno, docs).
-- `gitPush` callback de Replit maneja la autenticación; `git push` directo falla (HTTPS token).
+## Known gotcha — duplicate event listeners
 
-## Corrección incluida
+`app-core.js` previously called `init()` before other scripts loaded (line 81).
+Removing it was required; the only entry-point is now the `init()` at the bottom of `app-utils.js`.
+**Why:** without the fix, `bindGlobalEvents()` ran twice (duplicate listeners) and the first call threw `ReferenceError` because `initSupabase`/`renderHome` didn't exist yet.
 
-`app-core.js` tenía `init()` en la línea 81 (antes de que otros scripts estuvieran cargados).  
-Se eliminó. El único punto de entrada ahora es el `init()` al final de `app-utils.js`.  
-**Why:** sin la corrección, `bindGlobalEvents()` se ejecutaba dos veces (listeners duplicados) y la primera llamada lanzaba `ReferenceError` porque `initSupabase`/`renderHome` no existían aún.
+## Known gotcha — gitPush vs direct git push
 
-## Pasos post-merge que el usuario debe ejecutar
+The Replit `gitPush` callback handles authentication. A plain `git push` over HTTPS fails because there is no stored token in the container.
 
-1. SQL: ejecutar `supabase/migrations/20260724_sprite_forge.sql` en Supabase Dashboard.
-2. Auth: activar *Anonymous Sign-ins* en Supabase Auth → Providers.
-3. Edge Function: desplegar `generate-sprite` (Deno) desde el Dashboard o CLI.
-4. Secretos Cloudflare en Edge Function: `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, opcionalmente `CLOUDFLARE_IMAGE_MODEL`.
-5. GitHub Pages publica automáticamente `/sprite-forge/` — no requiere reconfiguración.
-6. Hacerse admin: insertar UUID propio en `sprite_admins`.
+## Image Transformation prerequisite
 
-## Supabase project ref
-
-`tyilsfxqctrgozlchwxc` (en `supabase/config.toml` y `config.js`).
+Reference image resizing in the Edge Function relies on Supabase Storage Image Transformation (`/storage/v1/render/image/public/…`). This feature must be enabled on the Supabase project plan; otherwise generation with reference images will return a hard error instead of silently forwarding full-size images.

@@ -74,6 +74,34 @@ function normalizeBase64(value: string) {
 }
 
 /**
+ * Convert a Supabase Storage public object URL to its image-transform equivalent
+ * so the server fetches a ≤480×480 version instead of the full-size file.
+ *
+ * /storage/v1/object/public/<bucket>/<path>
+ *   → /storage/v1/render/image/public/<bucket>/<path>?width=480&height=480&resize=contain
+ *
+ * If the pathname doesn't match the expected pattern the original URL is returned
+ * unchanged so the caller can still fetch something.
+ */
+function toResizedUrl(storageUrl: string): string {
+  try {
+    const url = new URL(storageUrl)
+    const transformed = url.pathname.replace(
+      '/storage/v1/object/public/',
+      '/storage/v1/render/image/public/',
+    )
+    if (transformed === url.pathname) return storageUrl // no match — leave as-is
+    url.pathname = transformed
+    url.searchParams.set('width', '480')
+    url.searchParams.set('height', '480')
+    url.searchParams.set('resize', 'contain')
+    return url.toString()
+  } catch {
+    return storageUrl
+  }
+}
+
+/**
  * Walk every plausible location in a Cloudflare Workers AI JSON response and
  * return the first non-empty base64 string found, or '' if none.
  *
@@ -200,8 +228,25 @@ Deno.serve(async (req) => {
     form.append('seed', String(seed))
 
     for (let index = 0; index < referenceUrls.length; index++) {
-      const response = await fetch(referenceUrls[index], { signal: AbortSignal.timeout(15_000) })
-      if (!response.ok) throw new Error(`No se pudo cargar la referencia ${index + 1}`)
+      // Always fetch through the Supabase Storage image-transform endpoint so
+      // Cloudflare receives a ≤480×480 image regardless of the original size.
+      // We intentionally do NOT fall back to the raw object URL: if the transform
+      // endpoint is unavailable we must fail loudly rather than silently forward a
+      // full-size (512–1024 px) image that may exceed model or policy limits.
+      const resizedUrl = toResizedUrl(referenceUrls[index])
+      const response = await fetch(resizedUrl, { signal: AbortSignal.timeout(15_000) })
+      if (!response.ok) {
+        console.log(JSON.stringify({
+          stage: 'reference_resize_error',
+          index,
+          transformStatus: response.status,
+          hint: 'Supabase Image Transformation may not be enabled on this project plan.',
+        }))
+        throw new Error(
+          `No se pudo redimensionar la referencia ${index + 1} (HTTP ${response.status}). ` +
+          `Asegúrate de que Supabase Image Transformation esté habilitado.`,
+        )
+      }
       const refContentType = response.headers.get('content-type') || 'image/png'
       if (!refContentType.startsWith('image/')) throw new Error(`La referencia ${index + 1} no es una imagen`)
       const blob = await response.blob()

@@ -4,8 +4,6 @@ description: Estado del deploy de CRIPTA Habilidades a Netlify — bloqueado por
 ---
 
 **Site:** cripta-habilidades.netlify.app  
-**Site ID:** 5b784fd4-b1bc-45e8-9f26-d9a78e49a7f5  
-**Team:** aspirin / egoivaldes@gmail.com  
 **Ruta local:** `cripta/` (subdir del workspace, añadido a pnpm-workspace.yaml)
 
 ## Estado
