@@ -13,6 +13,61 @@ const previewState = {
   timer: null,
 };
 
+// Batch generation progress state
+const batchState = {
+  active: false,
+  cancelled: false,
+  current: 0,
+  total: 0,
+  message: '',
+};
+
+// ---------------------------------------------------------------------------
+// Batch progress banner helpers
+// ---------------------------------------------------------------------------
+
+function showBatchProgress(current, total, message) {
+  batchState.active = true;
+  batchState.current = current;
+  batchState.total = total;
+  batchState.message = message;
+  _renderBatchBanner();
+}
+
+function hideBatchProgress() {
+  batchState.active = false;
+  batchState.cancelled = false;
+  const banner = document.getElementById('batchProgressBanner');
+  if (banner) banner.style.display = 'none';
+}
+
+/** Re-apply batchState to the DOM banner (safe to call after any renderEditor). */
+function restoreBatchBanner() {
+  if (!batchState.active) return;
+  _renderBatchBanner();
+}
+
+function _renderBatchBanner() {
+  const banner = document.getElementById('batchProgressBanner');
+  if (!banner) return;
+  const pct = batchState.total > 0 ? Math.round((batchState.current / batchState.total) * 100) : 0;
+  banner.style.display = '';
+  banner.innerHTML = `
+    <div class="batch-progress-info">
+      <span class="muted small" style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(batchState.message)}</span>
+      <span class="muted small" style="white-space:nowrap">${batchState.current}/${batchState.total}</span>
+      <button id="cancelBatchBtn" class="mini-btn" style="min-height:30px;font-size:.78rem;border-color:var(--danger);color:var(--danger)">⏹ Detener</button>
+    </div>
+    <div class="batch-progress-track">
+      <div class="batch-progress-fill" style="width:${pct}%"></div>
+    </div>`;
+  document.getElementById('cancelBatchBtn')?.addEventListener('click', () => {
+    batchState.cancelled = true;
+    const btn = document.getElementById('cancelBatchBtn');
+    if (btn) { btn.disabled = true; btn.textContent = 'Deteniendo…'; }
+  });
+}
+
 // Persistent state for the adjust-offset drag modal
 const adjustState = {
   frameId: null,
@@ -127,6 +182,7 @@ function renderFramesStep() {
         <button id="flipPreviewBtn" class="secondary-btn">${isPreviewFlipped(dir.id) ? 'Quitar espejo' : 'Ver espejo'}</button>
         <button id="goExportBtn" class="secondary-btn">Ir a exportar</button>
       </div>
+      <div id="batchProgressBanner" class="batch-progress-banner" style="display:none"></div>
       <div id="frameList" class="frame-list">${frames || '<div class="empty-state">No hay frames. Añade un hueco.</div>'}</div>
     </section>`;
 
@@ -215,6 +271,10 @@ function renderFramesStep() {
 
   bindFrameActions();
   bindPointerReorder();
+
+  // If a batch is in progress (e.g. after an internal renderEditor during generation),
+  // restore the banner so users always see the progress indicator.
+  restoreBatchBanner();
 }
 
 // ---------------------------------------------------------------------------
@@ -865,18 +925,36 @@ async function generateAnchors() {
     }
   }
 
+  // Count frames that actually need generation
+  const toGenerate = anchorIndices.filter(i => !(frames[i].approved && assetHasImage(frames[i])));
+  const total = toGenerate.length;
+  let current = 0;
+
+  batchState.cancelled = false;
+  renderEditor();
+  showBatchProgress(0, total, `Preparando anclas…`);
+
   for (const idx of anchorIndices) {
+    if (batchState.cancelled) break;
+
     const frame = frames[idx];
     if (frame.approved && assetHasImage(frame)) {
       toast(`Frame ${idx + 1} aprobado — omitido.`); continue;
     }
 
+    current++;
+    showBatchProgress(current - 1, total, `Generando ancla ${current} de ${total} (frame ${idx + 1})`);
+
     const refUrls = buildAnchorRefs(ctx);
     const roles = ctx?.masterUrl ? ['master'] : [];
 
-    frame.status = 'loading'; renderEditor();
     const stop = await generateFrame(frame, dir, anim, refUrls, roles);
-    if (stop) { scheduleSave(); renderEditor(); return; }
+
+    // Re-render to show completed image, then restore banner
+    renderEditor();
+    showBatchProgress(current, total, `✓ Frame ${idx + 1} listo`);
+
+    if (stop) { scheduleSave(); hideBatchProgress(); renderEditor(); return; }
 
     // Upload anchor immediately so it can serve as chained ref
     if (!state.settings.demoMode && state.online && sb && frame.blob && !frame.imagePath) {
@@ -887,8 +965,13 @@ async function generateAnchors() {
     scheduleSave();
   }
 
+  hideBatchProgress();
   renderEditor();
-  toast(`Anclas generadas: frames ${anchorIndices.map(i => i + 1).join(', ')}`);
+  if (batchState.cancelled) {
+    toast(`Generación detenida · ${current} de ${total} anclas completadas`);
+  } else {
+    toast(`Anclas generadas: frames ${anchorIndices.map(i => i + 1).join(', ')}`);
+  }
 }
 
 /** Return anchor indices for the given animation type and frame count. */
@@ -953,7 +1036,21 @@ async function generateIntermediates() {
     segments.push([anchorIndices[anchorIndices.length - 1], anchorIndices[0]]);
   }
 
+  // Count total frames to generate across all segments
+  let totalToGenerate = 0;
   for (const [startIdx, endIdx] of segments) {
+    const intermediateIndices = _getIntermediateIndices(startIdx, endIdx, frames.length);
+    totalToGenerate += intermediateIndices.filter(i => !(frames[i].approved && assetHasImage(frames[i]))).length;
+  }
+
+  let generatedCount = 0;
+  batchState.cancelled = false;
+  renderEditor();
+  showBatchProgress(0, totalToGenerate, `Preparando intermedios…`);
+
+  for (const [startIdx, endIdx] of segments) {
+    if (batchState.cancelled) break;
+
     const startAnchor = frames[startIdx];
     const endAnchor = frames[endIdx];
 
@@ -970,22 +1067,18 @@ async function generateIntermediates() {
 
     const startAnchorUrl = startAnchor.imagePath ? publicAssetUrl(startAnchor.imagePath) : '';
     const endAnchorUrl = endAnchor.imagePath ? publicAssetUrl(endAnchor.imagePath) : '';
+    const segmentLabel = `tramo ${startIdx + 1}→${endIdx + 1}`;
 
     // Intermediate indices: frames between startIdx and endIdx (exclusive)
-    const intermediateIndices = [];
-    if (endIdx > startIdx) {
-      for (let i = startIdx + 1; i < endIdx; i++) intermediateIndices.push(i);
-    } else {
-      // Cyclic wrap: startIdx+1 to end of array, then 0 to endIdx-1
-      for (let i = startIdx + 1; i < frames.length; i++) intermediateIndices.push(i);
-      for (let i = 0; i < endIdx; i++) intermediateIndices.push(i);
-    }
+    const intermediateIndices = _getIntermediateIndices(startIdx, endIdx, frames.length);
 
     if (!intermediateIndices.length) continue;
 
     let previousUrl = startAnchorUrl;
 
     for (const frameIdx of intermediateIndices) {
+      if (batchState.cancelled) break;
+
       const frame = frames[frameIdx];
 
       if (frame.approved && assetHasImage(frame)) {
@@ -993,17 +1086,23 @@ async function generateIntermediates() {
         continue;
       }
 
+      generatedCount++;
+      showBatchProgress(generatedCount - 1, totalToGenerate,
+        `Generando frame ${frameIdx + 1} (${generatedCount} de ${totalToGenerate} · ${segmentLabel})`);
+
       const { urls: chainedUrls, roles: chainedRoles } = buildChainedRefs(
         ctx?.masterUrl || '', startAnchorUrl, previousUrl, endAnchorUrl
       );
 
-      frame.status = 'loading'; renderEditor();
       const stop = await generateFrame(frame, dir, anim, chainedUrls, chainedRoles);
-      if (stop) { scheduleSave(); renderEditor(); return; }
+
+      // Re-render to show completed image, then restore banner
+      renderEditor();
+      showBatchProgress(generatedCount, totalToGenerate, `✓ Frame ${frameIdx + 1} listo`);
+
+      if (stop) { scheduleSave(); hideBatchProgress(); renderEditor(); return; }
 
       // Upload immediately so the next frame can use this one as previousUrl.
-      // Two cases: (a) blob exists and not yet uploaded → upload then use URL;
-      //            (b) already uploaded (imagePath set, blob GC'd) → use URL directly.
       if (!state.settings.demoMode && state.online && sb) {
         if (frame.blob && !frame.imagePath) {
           try {
@@ -1019,8 +1118,29 @@ async function generateIntermediates() {
     }
   }
 
+  hideBatchProgress();
   renderEditor();
-  toast('Intermedios generados');
+  if (batchState.cancelled) {
+    toast(`Generación detenida · ${generatedCount} de ${totalToGenerate} intermedios completados`);
+  } else {
+    toast('Intermedios generados');
+  }
+}
+
+/**
+ * Return the indices of intermediate frames between startIdx and endIdx (exclusive).
+ * Handles cyclic wrap (endIdx < startIdx).
+ */
+function _getIntermediateIndices(startIdx, endIdx, frameCount) {
+  const result = [];
+  if (endIdx > startIdx) {
+    for (let i = startIdx + 1; i < endIdx; i++) result.push(i);
+  } else {
+    // Cyclic wrap: startIdx+1 to end, then 0 to endIdx-1
+    for (let i = startIdx + 1; i < frameCount; i++) result.push(i);
+    for (let i = 0; i < endIdx; i++) result.push(i);
+  }
+  return result;
 }
 
 /**
@@ -1058,6 +1178,7 @@ function buildChainedRefs(masterUrl, startAnchorUrl, previousUrl, endAnchorUrl) 
 async function generateFrame(frame, dir, anim, referenceUrls = [], referenceRoles = []) {
   frame.status = 'loading';
   renderEditor();
+  restoreBatchBanner();
 
   try {
     if (state.settings.demoMode || !state.online || !sb) {
