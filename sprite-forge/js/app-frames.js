@@ -470,7 +470,8 @@ async function openAdjustOverlay(frameId) {
         const ox = f.offsetX || 0;
         const oy = f.offsetY || 0;
         ctx.save(); ctx.globalAlpha = 1;
-        ctx.translate(canvas.width / 2 + ox, canvas.height / 2 + oy);
+        // Foot-bottom pivot — matches applyFrameTransform in renderPreviewFrame
+        ctx.translate(canvas.width / 2 + ox, canvas.height + oy - s * canvas.height / 2);
         ctx.scale(s, s);
         ctx.drawImage(img, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
         ctx.restore();
@@ -632,7 +633,10 @@ async function renderPreviewFrame() {
     const ox = f.offsetX || 0;
     const oy = f.offsetY || 0;
     const s  = f.scale   ?? 1;
-    ctx2d.translate(W / 2 + ox, H / 2 + oy);
+    // Foot-bottom pivot: Y anchor is the bottom edge of the cell.
+    // This keeps the character's feet fixed when scale changes.
+    // At s=1: translate(W/2+ox, H+oy-H/2) = (W/2+ox, H/2+oy) — same as center ✓
+    ctx2d.translate(W / 2 + ox, H + oy - s * H / 2);
     ctx2d.scale(flip ? -s : s, s);
   }
 
@@ -947,17 +951,18 @@ async function generateIntermediates() {
       const stop = await generateFrame(frame, dir, anim, chainedUrls, chainedRoles);
       if (stop) { scheduleSave(); renderEditor(); return; }
 
-      // Upload immediately to use as previousUrl for the next frame
-      if (!state.settings.demoMode && state.online && sb && frame.blob) {
-        try {
-          if (!frame.imagePath) {
+      // Upload immediately so the next frame can use this one as previousUrl.
+      // Two cases: (a) blob exists and not yet uploaded → upload then use URL;
+      //            (b) already uploaded (imagePath set, blob GC'd) → use URL directly.
+      if (!state.settings.demoMode && state.online && sb) {
+        if (frame.blob && !frame.imagePath) {
+          try {
             await uploadAsset(state.currentProject, frame, `frames/${anim.id}/${dir.id}`);
+          } catch (err) {
+            console.warn('Intermediate upload failed:', err);
           }
-          previousUrl = publicAssetUrl(frame.imagePath);
-        } catch (err) {
-          console.warn('Intermediate upload failed, using start anchor URL:', err);
-          previousUrl = startAnchorUrl;
         }
+        if (frame.imagePath) previousUrl = publicAssetUrl(frame.imagePath);
       }
 
       scheduleSave();
@@ -1241,13 +1246,18 @@ async function buildSpritesheetCanvas() {
     const blob = await assetToBlob(frame);
     if (!blob) continue;
     const img = await blobToImage(blob);
-    const x = col * (frameW + gap), y = row * (frameH + gap);
-    if (flip) {
-      ctx.save(); ctx.translate(x + frameW, y); ctx.scale(-1, 1);
-      ctx.drawImage(img, 0, 0, frameW, frameH); ctx.restore();
-    } else {
-      ctx.drawImage(img, x, y, frameW, frameH);
-    }
+    const x  = col * (frameW + gap), y = row * (frameH + gap);
+    const ox = frame.offsetX || 0;
+    const oy = frame.offsetY || 0;
+    const s  = frame.scale  ?? 1;
+    ctx.save();
+    // Clip to cell so a large offset doesn't bleed into adjacent frames
+    ctx.beginPath(); ctx.rect(x, y, frameW, frameH); ctx.clip();
+    // Foot-bottom pivot (same math as applyFrameTransform / renderPreviewFrame)
+    ctx.translate(x + frameW / 2 + ox, y + frameH + oy - s * frameH / 2);
+    ctx.scale(flip ? -s : s, s);
+    ctx.drawImage(img, -frameW / 2, -frameH / 2, frameW, frameH);
+    ctx.restore();
   }
   return canvas;
 }

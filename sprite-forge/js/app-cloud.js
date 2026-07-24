@@ -463,7 +463,14 @@ function syncAnimationDirections(anim) {
       existing.key = def.key;
       existing.name = def.name;
       if (!Array.isArray(existing.frames) || !existing.frames.length) {
-        existing.frames = Array.from({ length: anim.initialFrameCount }, (_, i) => createFrame(i + 1));
+        // Ensure directionSeed exists before creating frames
+        const ds = existing.directionSeed || randomSeed();
+        existing.directionSeed = ds;
+        existing.frames = Array.from({ length: anim.initialFrameCount }, (_, i) => {
+          const f = createFrame(i + 1);
+          f.seed = ds + i;
+          return f;
+        });
       }
       renumberFrames(existing);
       return existing;
