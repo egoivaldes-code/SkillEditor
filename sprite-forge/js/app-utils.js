@@ -57,7 +57,7 @@ function bindValue(id, setter) {
     } catch (error) {
       console.error(error);
       state.saveStatus = 'error';
-      toast(`No se pudo guardar: ${error.message || error}`);
+      toast(error.message || 'No se pudo guardar el proyecto');
     } finally {
       state.syncing = false;
       if (state.saveQueued) {

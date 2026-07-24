@@ -147,45 +147,112 @@ function renderFramesStep() {
     });
   }
 
+  // ---------------------------------------------------------------------------
+  // Generation — public entry points
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Generate all frames across all directions (or only missing ones).
+   * Calls prepareGeneration ONCE before the loop.
+   * Stops all remaining frames if a fatal error occurs.
+   */
   async function generateAnimation(onlyMissing) {
     const anim = getActiveAnimation();
+    let referenceUrls = [];
+
+    if (!state.settings.demoMode && state.online && sb) {
+      try {
+        referenceUrls = await prepareGeneration();
+      } catch (error) {
+        toast(error.message || 'Error al preparar la generación');
+        return; // do NOT mark any frame as error — leave them as they were
+      }
+    }
+
     for (const dir of anim.directions) {
       for (const frame of dir.frames) {
         if (onlyMissing && assetHasImage(frame)) continue;
-        await generateFrame(frame, dir, anim);
+        const stop = await generateFrame(frame, dir, anim, referenceUrls);
+        if (stop) { scheduleSave(); renderEditor(); return; }
       }
     }
     scheduleSave(); renderEditor();
   }
 
+  /**
+   * Generate only missing frames in a single direction.
+   * Calls prepareGeneration ONCE before the loop.
+   */
   async function generateDirectionMissing(dir) {
     const anim = getActiveAnimation();
-    for (const frame of dir.frames) if (!assetHasImage(frame)) await generateFrame(frame, dir, anim);
+    let referenceUrls = [];
+
+    if (!state.settings.demoMode && state.online && sb) {
+      try {
+        referenceUrls = await prepareGeneration();
+      } catch (error) {
+        toast(error.message || 'Error al preparar la generación');
+        return;
+      }
+    }
+
+    for (const frame of dir.frames) {
+      if (assetHasImage(frame)) continue;
+      const stop = await generateFrame(frame, dir, anim, referenceUrls);
+      if (stop) { scheduleSave(); renderEditor(); return; }
+    }
     scheduleSave(); renderEditor();
   }
 
+  /**
+   * Regenerate a single frame by its ID.
+   * Calls prepareGeneration once before invoking the Edge Function.
+   */
   async function generateFrameById(id) {
     const anim = getActiveAnimation();
     const dir = getSelectedDirection();
     const frame = dir.frames.find(f => f.id === id);
     if (!frame) return;
+
+    let referenceUrls = [];
+    if (!state.settings.demoMode && state.online && sb) {
+      try {
+        referenceUrls = await prepareGeneration();
+      } catch (error) {
+        toast(error.message || 'Error al preparar la generación');
+        return;
+      }
+    }
+
     frame.status = 'loading'; renderEditor();
-    await generateFrame(frame, dir, anim);
+    await generateFrame(frame, dir, anim, referenceUrls);
     scheduleSave(); renderEditor();
   }
 
-  async function generateFrame(frame, dir, anim) {
+  // ---------------------------------------------------------------------------
+  // Core generation — low level
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Generate a single frame.
+   *
+   * @param {object} frame         - Frame object (mutated in place)
+   * @param {object} dir           - Direction the frame belongs to
+   * @param {object} anim          - Animation the direction belongs to
+   * @param {string[]} referenceUrls - Public Storage URLs, already uploaded by prepareGeneration
+   * @returns {boolean}            - true = caller should stop the loop (fatal error)
+   */
+  async function generateFrame(frame, dir, anim, referenceUrls = []) {
+    const previousStatus = frame.status;
     frame.status = 'loading';
     renderEditor();
+
     try {
       if (state.settings.demoMode || !state.online || !sb) {
+        // Demo: generate a local placeholder — no network, no quota used
         frame.blob = await makeDemoFrame(anim.width, anim.height, dir.name, dir.frames.indexOf(frame) + 1, anim.type);
       } else {
-        await persistProjectAssets(state.currentProject);
-        const referenceUrls = (state.currentProject.references || [])
-          .map(asset => asset.imagePath ? publicAssetUrl(asset.imagePath) : '')
-          .filter(Boolean)
-          .slice(0, 4);
+        // Cloud: referenceUrls already prepared — do NOT call persistProjectAssets here
         const payload = {
           projectId: state.currentProject.id,
           animation: anim.type,
@@ -202,29 +269,50 @@ function renderFramesStep() {
           prompt: buildFramePrompt(frame, dir, anim),
           referenceUrls
         };
+
         const { data, error } = await sb.functions.invoke(CONFIG.generationFunction, { body: payload });
+
         if (error) {
+          // Attempt to read a structured body from the edge function response
           let detail = error.message || 'La función de generación falló';
           try {
-            const responseBody = await error.context?.clone?.().json();
-            if (responseBody?.error) detail = responseBody.error;
+            const body = await error.context?.clone?.().json();
+            if (body?.error) detail = body.error;
           } catch {}
-          throw new Error(detail);
+          const translated = translateGenerationError(detail, error);
+          throw Object.assign(new Error(translated), { fatal: true });
         }
-        if (!data?.imageBase64) throw new Error(data?.error || 'La función no devolvió una imagen');
+
+        if (!data?.imageBase64) {
+          const msg = data?.error || 'La función no devolvió una imagen';
+          const isQuota = msg.toLowerCase().includes('cuota') || msg.toLowerCase().includes('limit') || msg.toLowerCase().includes('neuron');
+          throw Object.assign(new Error(translateGenerationError(msg, null)), { fatal: isQuota });
+        }
+
         frame.blob = base64ToBlob(data.imageBase64, data.mimeType || 'image/png');
         if (data.seed != null) frame.seed = data.seed;
-        if (data.remainingEstimatedNeurons != null) toast(`Generado · cuota estimada restante: ${data.remainingEstimatedNeurons}`);
+        if (data.remainingEstimatedNeurons != null) {
+          toast(`Generado · cuota estimada restante: ${data.remainingEstimatedNeurons}`);
+        }
       }
+
+      // Success
       frame.imagePath = '';
       frame.status = 'ready';
       frame.updatedAt = Date.now();
+      return false; // continue loop
+
     } catch (error) {
-      console.error(error);
+      console.error('generateFrame error:', error);
       frame.status = 'error';
-      toast(`No se pudo generar ${frame.label}: ${error.message || error}`);
+      toast(error.message || String(error));
+      return error.fatal ?? false; // true = stop remaining frames
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Prompt builder
+  // ---------------------------------------------------------------------------
 
   function buildFramePrompt(frame, dir, anim) {
     const base = state.currentProject.basePrompt;
@@ -239,6 +327,10 @@ ${mirrorNote}
 ${negative}
 Mantener exactamente el mismo personaje, escala, encuadre, iluminación y paleta. Fondo magenta chroma puro #FF00FF, sin degradado hacia el fondo.`;
   }
+
+  // ---------------------------------------------------------------------------
+  // Demo frame generator
+  // ---------------------------------------------------------------------------
 
   async function makeDemoFrame(width, height, direction, index, type) {
     const canvas = document.createElement('canvas');
@@ -263,6 +355,10 @@ Mantener exactamente el mismo personaje, escala, encuadre, iluminación y paleta
     ctx.fillText(`${type} · ${direction} · ${index}`, cx, 39);
     return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
   }
+
+  // ---------------------------------------------------------------------------
+  // Export step
+  // ---------------------------------------------------------------------------
 
   function renderExportStep() {
     const anim = getActiveAnimation();
