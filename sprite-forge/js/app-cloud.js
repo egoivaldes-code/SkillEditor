@@ -13,6 +13,10 @@ function translateSupabaseError(error) {
   return msg;
 }
 
+function randomSeed() {
+  return Math.floor(Math.random() * 2_147_483_647);
+}
+
 function translateGenerationError(detail, error) {
   const msg = (detail || error?.message || String(error)).toLowerCase();
   const code = String(error?.code || error?.status || '');
@@ -150,10 +154,21 @@ async function prepareGeneration() {
   }
 
   // Build reference URL list (refs now have imagePath set)
-  return (project.references || [])
+  const allRefUrls = (project.references || [])
     .map(ref => ref.imagePath ? publicAssetUrl(ref.imagePath) : '')
-    .filter(Boolean)
-    .slice(0, 4);
+    .filter(Boolean);
+
+  const masterRef = project.masterReferenceId
+    ? project.references.find(r => r.id === project.masterReferenceId)
+    : null;
+  const masterUrl = masterRef?.imagePath ? publicAssetUrl(masterRef.imagePath) : '';
+
+  // Put master reference first in the general list (up to 4 total)
+  const referenceUrls = masterUrl
+    ? [masterUrl, ...allRefUrls.filter(u => u !== masterUrl)].slice(0, 4)
+    : allRefUrls.slice(0, 4);
+
+  return { referenceUrls, masterUrl, allRefUrls };
 }
 
 // ---------------------------------------------------------------------------
@@ -307,6 +322,7 @@ function createProject() {
     cloudPersisted: false,
     name: 'Nuevo personaje',
     category: 'Personaje',
+    masterReferenceId: '',
     basePrompt: 'Pixel art detallado, RPG medieval oscuro, vista top-down 3/4, fondo magenta chroma #FF00FF, personaje centrado, misma escala y encuadre.',
     negativePrompt: 'texto, interfaz, suelo, sombras sobre el fondo, deformidades, frames unidos',
     references: [],
@@ -320,6 +336,7 @@ function createProject() {
 }
 
 function createAnimation(type = 'Walk', directionCount = 2, frameCount = 6, mirror = false) {
+  const baseSeed = randomSeed();
   const directionDefs = getDirectionDefs(directionCount, mirror);
   return {
     id: uid(),
@@ -328,15 +345,24 @@ function createAnimation(type = 'Walk', directionCount = 2, frameCount = 6, mirr
     directionCount,
     mirror,
     initialFrameCount: frameCount,
+    baseSeed,
     width: 512,
     height: 512,
     background: '#FF00FF',
-    directions: directionDefs.map(def => ({
-      id: uid(),
-      key: def.key,
-      name: def.name,
-      frames: Array.from({ length: frameCount }, (_, i) => createFrame(i + 1))
-    }))
+    directions: directionDefs.map(def => {
+      const directionSeed = randomSeed();
+      return {
+        id: uid(),
+        key: def.key,
+        name: def.name,
+        directionSeed,
+        frames: Array.from({ length: frameCount }, (_, i) => {
+          const f = createFrame(i + 1);
+          f.seed = directionSeed + i;
+          return f;
+        })
+      };
+    })
   };
 }
 
@@ -348,6 +374,13 @@ function createFrame(index) {
     status: 'empty',
     blob: null,
     imagePath: '',
+    seed: null,
+    isAnchor: false,
+    approved: false,
+    offsetX: 0,
+    offsetY: 0,
+    scale: 1,
+    autoAligned: false,
     createdAt: Date.now(),
     updatedAt: Date.now()
   };
@@ -389,11 +422,22 @@ function directionChipText(anim) {
 function normalizeAnimation(anim) {
   if (!anim) return;
   if (typeof anim.mirror !== 'boolean') anim.mirror = false;
+  if (typeof anim.baseSeed !== 'number') anim.baseSeed = randomSeed();
   if (!Array.isArray(anim.directions)) anim.directions = [];
-  anim.directions.forEach(dir => {
+  anim.directions.forEach((dir, di) => {
     dir.key = dir.key || directionKeyFromName(dir.name);
+    if (typeof dir.directionSeed !== 'number') dir.directionSeed = randomSeed();
     if (!Array.isArray(dir.frames)) dir.frames = [];
-    dir.frames.forEach(frame => { frame.imagePath = frame.imagePath || ''; });
+    dir.frames.forEach((frame, fi) => {
+      frame.imagePath = frame.imagePath || '';
+      if (frame.seed == null) frame.seed = dir.directionSeed + fi;
+      if (typeof frame.isAnchor !== 'boolean') frame.isAnchor = false;
+      if (typeof frame.approved !== 'boolean') frame.approved = false;
+      if (typeof frame.offsetX !== 'number') frame.offsetX = 0;
+      if (typeof frame.offsetY !== 'number') frame.offsetY = 0;
+      if (typeof frame.scale !== 'number') frame.scale = 1;
+      if (typeof frame.autoAligned !== 'boolean') frame.autoAligned = false;
+    });
     renumberFrames(dir);
   });
 }
@@ -402,6 +446,7 @@ function normalizeProject(project) {
   if (!project) return;
   project.ownerId = project.ownerId || state.currentUser?.id || 'local';
   project.author = project.author || state.authorName || 'Sin nombre';
+  if (!('masterReferenceId' in project)) project.masterReferenceId = '';
   project.references = Array.isArray(project.references) ? project.references : [];
   project.references.forEach(ref => { ref.imagePath = ref.imagePath || ''; });
   project.animations = Array.isArray(project.animations) ? project.animations : [];

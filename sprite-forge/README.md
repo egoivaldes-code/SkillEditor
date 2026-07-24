@@ -6,6 +6,16 @@ Editor colaborativo, móvil-first, para crear referencias, animaciones, frames y
 
 ## Características
 
+### Consistencia entre frames (v0.5.0)
+- **Referencia maestra** (★) — marca una referencia de proyecto como fuente de identidad, equipo, proporciones, paleta, cámara e iluminación. Se envía siempre como `input_image_0` y su rol se describe explícitamente al modelo.
+- **Frames ancla** (⚓) — marca frames como puntos de referencia. El botón "Generar anclas" propone automáticamente los anclas óptimos según el tipo de animación (cíclica: primer + mitad; no-cíclica: primero + último).
+- **Generación encadenada** — "Generar intermedios" genera cada tramo entre anclas usando hasta cuatro referencias ordenadas: maestra → ancla-inicio → frame-anterior → ancla-destino. Para animaciones en bucle, el último tramo vuelve al primer ancla.
+- **Seeds por frame** — cada animación tiene `baseSeed`, cada dirección `directionSeed`, cada frame `seed = directionSeed + frameIndex`. Acciones: ↻ mismo seed / ↺ nuevo seed.
+- **Frames aprobados** (✓) — los frames aprobados no se sobreescriben automáticamente.
+- **Auto-alineación** (⊹) — detecta el bounding-box del personaje (píxeles no-magenta), calcula el anclaje de pies y alinea al ancla de referencia. Guarda `offsetX/offsetY` sin modificar el Blob.
+- **Vista previa de animación** — reproductor con Play/Pausa, FPS (4–12), loop y piel de cebolla (frame anterior al 27%).
+
+### Generación IA
 - Biblioteca familiar compartida mediante Supabase Realtime.
 - Identidad anónima por dispositivo y nombre visible.
 - Proyectos propios editables; proyectos ajenos duplicables; administración familiar opcional.

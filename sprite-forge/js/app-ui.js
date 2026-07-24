@@ -180,11 +180,18 @@ function renderHome() {
 
   function renderBaseStep() {
     const p = state.currentProject;
-    const refs = p.references.map(ref => `
+    const refs = p.references.map(ref => {
+      const isMaster = ref.id === p.masterReferenceId;
+      return `
       <div class="ref-card">
         <img src="${escapeAttr(assetSrc(ref))}" alt="${escapeHtml(ref.name || 'Referencia')}">
-        <button class="remove-ref" data-remove-ref="${ref.id}">✕</button>
-      </div>`).join('');
+        <div class="ref-card-actions">
+          <button class="mini-btn" data-set-master="${ref.id}" title="${isMaster ? 'Quitar referencia maestra' : 'Marcar como referencia maestra'}" style="${isMaster ? 'color:var(--accent);border-color:var(--accent)' : ''}">★</button>
+          <button class="remove-ref mini-btn" data-remove-ref="${ref.id}" title="Eliminar">✕</button>
+        </div>
+        ${isMaster ? '<div class="ref-master-label">Referencia maestra</div>' : ''}
+      </div>`;
+    }).join('');
 
     els.main.innerHTML = `
       <section class="section">
@@ -217,10 +224,17 @@ function renderHome() {
     bindValue('basePrompt', value => p.basePrompt = value);
     bindValue('negativePrompt', value => p.negativePrompt = value);
     document.getElementById('addReferenceBtn')?.addEventListener('click', () => els.referenceInput.click());
+    els.main.querySelectorAll('[data-set-master]').forEach(btn => btn.addEventListener('click', () => {
+      const id = btn.dataset.setMaster;
+      p.masterReferenceId = p.masterReferenceId === id ? '' : id;
+      scheduleSave(); renderEditor();
+    }));
     els.main.querySelectorAll('[data-remove-ref]').forEach(btn => btn.addEventListener('click', async () => {
-      const ref = p.references.find(r => r.id === btn.dataset.removeRef);
+      const id = btn.dataset.removeRef;
+      const ref = p.references.find(r => r.id === id);
       await removeAsset(ref);
-      p.references = p.references.filter(r => r.id !== btn.dataset.removeRef);
+      p.references = p.references.filter(r => r.id !== id);
+      if (p.masterReferenceId === id) p.masterReferenceId = '';
       scheduleSave(); renderEditor();
     }));
     document.getElementById('nextBaseBtn').addEventListener('click', () => { state.currentStep = 'config'; renderEditor(); });
