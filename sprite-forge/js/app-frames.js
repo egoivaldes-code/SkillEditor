@@ -13,6 +13,19 @@ const previewState = {
   timer: null
 };
 
+// Persistent state for the adjust-offset drag modal
+const adjustState = {
+  frameId: null,
+  origOffsetX: 0,
+  origOffsetY: 0,
+  origScale: 1,
+  dragging: false,
+  dragStartX: 0,
+  dragStartY: 0,
+  dragStartOX: 0,
+  dragStartOY: 0,
+};
+
 // ---------------------------------------------------------------------------
 // Render frames step
 // ---------------------------------------------------------------------------
@@ -220,6 +233,7 @@ function frameCardHtml(frame, index, flipped = false) {
           <button class="mini-btn" data-generate-frame="${frame.id}" title="Regenerar mismo seed">↻</button>
           <button class="mini-btn" data-generate-new-seed="${frame.id}" title="Regenerar nuevo seed">↺+</button>
           <button class="mini-btn" data-auto-align="${frame.id}" title="Autoalinear">⊹</button>
+          <button class="mini-btn" data-adjust-frame="${frame.id}" title="Ajustar posición manualmente">✥</button>
           <button class="mini-btn" data-delete-frame="${frame.id}" title="Eliminar">🗑</button>
         </div>
       </div>
@@ -244,6 +258,7 @@ function bindFrameActions() {
   els.main.querySelectorAll('[data-toggle-anchor]').forEach(btn => btn.addEventListener('click', () => toggleFrameAnchor(btn.dataset.toggleAnchor)));
   els.main.querySelectorAll('[data-toggle-approve]').forEach(btn => btn.addEventListener('click', () => toggleFrameApprove(btn.dataset.toggleApprove)));
   els.main.querySelectorAll('[data-auto-align]').forEach(btn => btn.addEventListener('click', () => autoAlignFrame(btn.dataset.autoAlign)));
+  els.main.querySelectorAll('[data-adjust-frame]').forEach(btn => btn.addEventListener('click', () => openAdjustOverlay(btn.dataset.adjustFrame)));
 }
 
 // ---------------------------------------------------------------------------
@@ -366,6 +381,189 @@ async function autoAlign(frame, anchorFrame) {
 }
 
 // ---------------------------------------------------------------------------
+// Adjust-offset overlay (drag / nudge to reposition a frame)
+// ---------------------------------------------------------------------------
+
+async function openAdjustOverlay(frameId) {
+  const dir = getSelectedDirection();
+  const anim = getActiveAnimation();
+  const frame = dir.frames.find(f => f.id === frameId);
+  if (!frame || !assetHasImage(frame)) return toast('El frame necesita imagen para ajustar.');
+
+  // Persist originals so Cancel can restore them
+  adjustState.frameId = frameId;
+  adjustState.origOffsetX = frame.offsetX || 0;
+  adjustState.origOffsetY = frame.offsetY || 0;
+  adjustState.origScale = frame.scale ?? 1;
+
+  // Reference ghost: nearest anchor-with-image (not self), else first frame with image
+  const refFrame = dir.frames.find(f => f.isAnchor && assetHasImage(f) && f.id !== frameId)
+    || dir.frames.find(f => assetHasImage(f) && f.id !== frameId)
+    || null;
+
+  const overlay = document.createElement('div');
+  overlay.id = 'adjustOverlay';
+  overlay.innerHTML = `
+    <div class="adjust-modal">
+      <div class="section-head" style="margin-bottom:8px">
+        <strong>Ajustar posición · ${escapeHtml(frame.label)}</strong>
+        <button id="adjCloseBtn" class="mini-btn" title="Cancelar">✕</button>
+      </div>
+      <p class="muted small" style="margin:0 0 8px">Arrastra el personaje · botones ± 1 px · ↺ para resetear.</p>
+      <canvas id="adjCanvas" width="${anim.width}" height="${anim.height}"
+        style="border-radius:10px;background:#ff00ff;image-rendering:pixelated;display:block;margin:0 auto;max-width:100%"></canvas>
+      <div class="adj-readouts" style="margin-top:8px">
+        <button class="mini-btn" id="adjLeft">←</button>
+        <button class="mini-btn" id="adjRight">→</button>
+        <button class="mini-btn" id="adjUp">↑</button>
+        <button class="mini-btn" id="adjDown">↓</button>
+        <span class="muted small">ΔX&nbsp;<code id="adjX">0</code></span>
+        <span class="muted small">ΔY&nbsp;<code id="adjY">0</code></span>
+        <button class="mini-btn" id="adjReset">↺&nbsp;0</button>
+      </div>
+      <label class="field" style="margin-top:6px">
+        <span>Escala</span>
+        <input id="adjScale" type="range" min="0.5" max="2" step="0.05" value="${frame.scale ?? 1}" style="flex:1">
+        <code id="adjScaleVal">${(frame.scale ?? 1).toFixed(2)}×</code>
+      </label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+        <button id="adjCancelBtn" class="secondary-btn">Cancelar</button>
+        <button id="adjSaveBtn" class="primary-btn">Guardar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const canvas = document.getElementById('adjCanvas');
+
+  /** Pixel-to-canvas ratio (CSS px → logical canvas px). */
+  function cssToCanvas() {
+    return canvas.width / canvas.getBoundingClientRect().width;
+  }
+
+  async function redraw() {
+    const f = dir.frames.find(f => f.id === frameId);
+    if (!f) return;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.fillStyle = '#ff00ff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Ghost reference frame at 40 % opacity, no offset, scale=1
+    if (refFrame) {
+      try {
+        const rBlob = await assetToBlob(refFrame);
+        if (rBlob) {
+          const rImg = await blobToImage(rBlob);
+          ctx.save(); ctx.globalAlpha = 0.4;
+          ctx.drawImage(rImg, 0, 0, canvas.width, canvas.height);
+          ctx.restore();
+        }
+      } catch {}
+    }
+
+    // Current frame: center-pivot translate + scale
+    try {
+      const blob = await assetToBlob(f);
+      if (blob) {
+        const img = await blobToImage(blob);
+        const s = f.scale ?? 1;
+        const ox = f.offsetX || 0;
+        const oy = f.offsetY || 0;
+        ctx.save(); ctx.globalAlpha = 1;
+        ctx.translate(canvas.width / 2 + ox, canvas.height / 2 + oy);
+        ctx.scale(s, s);
+        ctx.drawImage(img, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+        ctx.restore();
+      }
+    } catch {}
+
+    // Update numeric readouts
+    const xEl = document.getElementById('adjX');
+    const yEl = document.getElementById('adjY');
+    if (xEl) xEl.textContent = f.offsetX || 0;
+    if (yEl) yEl.textContent = f.offsetY || 0;
+  }
+
+  await redraw();
+
+  // ── Pointer drag ──────────────────────────────────────────────────────────
+  canvas.addEventListener('pointerdown', e => {
+    adjustState.dragging = true;
+    adjustState.dragStartX = e.clientX;
+    adjustState.dragStartY = e.clientY;
+    const f = dir.frames.find(f => f.id === frameId);
+    adjustState.dragStartOX = f?.offsetX || 0;
+    adjustState.dragStartOY = f?.offsetY || 0;
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener('pointermove', async e => {
+    if (!adjustState.dragging) return;
+    const ratio = cssToCanvas();
+    const dx = Math.round((e.clientX - adjustState.dragStartX) * ratio);
+    const dy = Math.round((e.clientY - adjustState.dragStartY) * ratio);
+    const f = dir.frames.find(f => f.id === frameId);
+    if (!f) return;
+    f.offsetX = adjustState.dragStartOX + dx;
+    f.offsetY = adjustState.dragStartOY + dy;
+    await redraw();
+  });
+  const endDrag = () => { adjustState.dragging = false; };
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+
+  // ── Fine-tune nudge buttons ───────────────────────────────────────────────
+  async function nudge(dx, dy) {
+    const f = dir.frames.find(f => f.id === frameId);
+    if (!f) return;
+    f.offsetX = (f.offsetX || 0) + dx;
+    f.offsetY = (f.offsetY || 0) + dy;
+    await redraw();
+  }
+  document.getElementById('adjLeft').addEventListener('click',  () => nudge(-1,  0));
+  document.getElementById('adjRight').addEventListener('click', () => nudge( 1,  0));
+  document.getElementById('adjUp').addEventListener('click',    () => nudge( 0, -1));
+  document.getElementById('adjDown').addEventListener('click',  () => nudge( 0,  1));
+
+  // ── Reset ─────────────────────────────────────────────────────────────────
+  document.getElementById('adjReset').addEventListener('click', async () => {
+    const f = dir.frames.find(f => f.id === frameId);
+    if (!f) return;
+    f.offsetX = 0; f.offsetY = 0; f.scale = 1;
+    document.getElementById('adjScale').value = 1;
+    document.getElementById('adjScaleVal').textContent = '1.00×';
+    await redraw();
+  });
+
+  // ── Scale slider ──────────────────────────────────────────────────────────
+  document.getElementById('adjScale').addEventListener('input', async e => {
+    const val = parseFloat(e.target.value);
+    document.getElementById('adjScaleVal').textContent = val.toFixed(2) + '×';
+    const f = dir.frames.find(f => f.id === frameId);
+    if (!f) return;
+    f.scale = val;
+    await redraw();
+  });
+
+  // ── Cancel / Close ────────────────────────────────────────────────────────
+  const cancelAdjust = () => {
+    const f = dir.frames.find(f => f.id === frameId);
+    if (f) { f.offsetX = adjustState.origOffsetX; f.offsetY = adjustState.origOffsetY; f.scale = adjustState.origScale; }
+    overlay.remove();
+  };
+  document.getElementById('adjCloseBtn').addEventListener('click', cancelAdjust);
+  document.getElementById('adjCancelBtn').addEventListener('click', cancelAdjust);
+  overlay.addEventListener('click', e => { if (e.target === overlay) cancelAdjust(); });
+
+  // ── Save ──────────────────────────────────────────────────────────────────
+  document.getElementById('adjSaveBtn').addEventListener('click', () => {
+    const f = dir.frames.find(f => f.id === frameId);
+    if (f) f.autoAligned = true;
+    overlay.remove();
+    scheduleSave(); renderEditor();
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Preview player
 // ---------------------------------------------------------------------------
 
@@ -420,6 +618,24 @@ async function renderPreviewFrame() {
   ctx.fillStyle = '#ff00ff';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
+  const W = canvas.width, H = canvas.height;
+
+  /**
+   * Apply center-pivot translate + scale (+ optional horizontal flip).
+   * All three callers (onion skin, current frame, adjust overlay) use this
+   * same math so the preview is always consistent with the adjust overlay.
+   *
+   *   flipped=false: origin at (W/2+ox, H/2+oy), scale(s, s)
+   *   flipped=true:  origin at (W/2+ox, H/2+oy), scale(-s, s)  ← mirror X
+   */
+  function applyFrameTransform(ctx2d, f, flip) {
+    const ox = f.offsetX || 0;
+    const oy = f.offsetY || 0;
+    const s  = f.scale   ?? 1;
+    ctx2d.translate(W / 2 + ox, H / 2 + oy);
+    ctx2d.scale(flip ? -s : s, s);
+  }
+
   // Onion skin
   if (previewState.onionSkin && prevFrame && prevFrame.id !== frame.id) {
     try {
@@ -428,9 +644,8 @@ async function renderPreviewFrame() {
         const pImg = await blobToImage(pBlob);
         ctx.save();
         ctx.globalAlpha = 0.27;
-        if (flipped) { ctx.translate(canvas.width + (prevFrame.offsetX || 0), prevFrame.offsetY || 0); ctx.scale(-1, 1); }
-        else { ctx.translate(prevFrame.offsetX || 0, prevFrame.offsetY || 0); }
-        ctx.drawImage(pImg, 0, 0, canvas.width, canvas.height);
+        applyFrameTransform(ctx, prevFrame, flipped);
+        ctx.drawImage(pImg, -W / 2, -H / 2, W, H);
         ctx.restore();
       }
     } catch {}
@@ -443,9 +658,8 @@ async function renderPreviewFrame() {
       const img = await blobToImage(blob);
       ctx.save();
       ctx.globalAlpha = 1;
-      if (flipped) { ctx.translate(canvas.width + (frame.offsetX || 0), frame.offsetY || 0); ctx.scale(-1, 1); }
-      else { ctx.translate(frame.offsetX || 0, frame.offsetY || 0); }
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      applyFrameTransform(ctx, frame, flipped);
+      ctx.drawImage(img, -W / 2, -H / 2, W, H);
       ctx.restore();
     }
   } catch {}

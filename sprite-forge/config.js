@@ -4,5 +4,5 @@ window.CRIPTA_SPRITE_CONFIG = Object.freeze({
   projectsTable: 'sprite_projects',
   assetsBucket: 'sprite-assets',
   generationFunction: 'generate-sprite',
-  appVersion: '0.5.0-cloud'
+  appVersion: '0.6.0-cloud'
 });

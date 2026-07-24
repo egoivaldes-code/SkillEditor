@@ -110,6 +110,13 @@ img { display: block; max-width: 100%; }
 .frame-status.loading { color: var(--accent); }
 .ref-master-label { font-size: .68rem; color: var(--accent); font-weight: 700; text-align: center; padding: 0 5px 5px; }
 
+/* Adjust-offset overlay */
+#adjustOverlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.78); display: flex; align-items: flex-end; justify-content: center; padding: 12px; }
+@media (min-height: 600px) { #adjustOverlay { align-items: center; } }
+.adjust-modal { background: var(--panel); border: 1px solid var(--line); border-radius: 18px; padding: 16px; width: 100%; max-width: 420px; max-height: 92dvh; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+.adjust-modal canvas { cursor: move; touch-action: none; }
+.adj-readouts { display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
+
 .canvas-wrap { overflow: auto; border-radius: 14px; border: 1px solid var(--line); background: #171515; padding: 10px; }
 .canvas-wrap canvas { display: block; max-width: none; background: repeating-conic-gradient(#262222 0 25%, #1d1a1a 0 50%) 50%/18px 18px; image-rendering: pixelated; }
 .export-grid { display: grid; gap: 10px; }
